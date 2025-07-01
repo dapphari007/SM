@@ -9,6 +9,7 @@ import { Team } from "../entities/Team";
 import { Skill } from "../entities/Skill";
 import { User } from "../entities/User";
 import { SkillUpgradeGuide } from "../entities/SkillUpgradeGuide";
+import { Auth } from "../entities/Auth";
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  synchronize: false,
+  synchronize: false, // Disable for production - use migrations instead
   logging: false,
   entities: [
     Skill,
@@ -30,7 +31,8 @@ export const AppDataSource = new DataSource({
     Team,
     Position,
     User,
-    Audit
+    Audit,
+    Auth
   ],
 });
 

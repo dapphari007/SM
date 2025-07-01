@@ -1,8 +1,8 @@
 export enum AssessmentStatus{
-    "Pending",
-    "Approved",
-    "Cancelled",
-    "Forwarded"
+    Pending = "Pending",
+    Approved = "Approved", 
+    Cancelled = "Cancelled",
+    Forwarded = "Forwarded"
 }
 
 export enum position {

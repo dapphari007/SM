@@ -2,6 +2,7 @@ import { AssessmentStatus } from '../enum/enum';
 
 export interface UserType {
   id: string;
+  userId: string;
   name: string;
   email: string;
   roleId?: number;
@@ -106,8 +107,17 @@ export interface AssessmentRequestType {
   nextApprover?: number;
   
   // Relations
-  Score?: ScoreType;
+  Score?: ScoreType[];
   user?: UserType;
   Audit?: AuditType;
   skill?: SkillType;
+}
+
+export interface AuthType {
+  id: number;
+  email: string;
+  // passwordHash?: string; // For legacy login - commented out for OAuth only
+  
+  // Relations
+  user?: UserType;
 }

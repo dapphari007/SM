@@ -38,11 +38,11 @@ const AssessmentService = {
       const existingAssessment = await assessmentRequestRepo.findOne({
         where: {
           userId: userId,
-          status: In(["Pending"]),
+          status: In([AssessmentStatus.Pending]),
         },
       });
 
-      const status = (user.hrId || user.leadId) ? 'Pending' : 'Approved';
+      const status = (user.hrId || user.leadId) ? AssessmentStatus.Pending : AssessmentStatus.Approved;
 
       let savedAssessment;
       if (existingAssessment) {
@@ -52,7 +52,7 @@ const AssessmentService = {
         const assessment = assessmentRequestRepo.create({
           userId: userId,
           status: status,
-          nextApprover: user.leadId || user.hrId,
+          nextApprover: user.leadId ? parseInt(user.leadId) : (user.hrId ? parseInt(user.hrId) : undefined),
         });
         savedAssessment = await assessmentRequestRepo.save(assessment);
       }
@@ -228,13 +228,13 @@ const AssessmentService = {
       }
 
       if (
-        assessment.status === "Approved" as unknown as AssessmentStatus ||
-        assessment.status === "Forwarded" as unknown as AssessmentStatus
+        assessment.status === AssessmentStatus.Approved ||
+        assessment.status === AssessmentStatus.Forwarded
       ) {
         throw new Error("Cannot cancel an approved or forwarded assessment");
       }
 
-      assessment.status = "Cancelled" as unknown as AssessmentStatus;
+      assessment.status = AssessmentStatus.Cancelled;
       await scoreRepo?.delete({ assessmentId: assessmentId });
       
       // Reset sequence for scores
@@ -267,13 +267,13 @@ const AssessmentService = {
       }
 
       if (
-        assessment.status !== "Pending" as unknown as AssessmentStatus &&
-        assessment.status !== "Forwarded" as unknown as AssessmentStatus
+        assessment.status !== AssessmentStatus.Pending &&
+        assessment.status !== AssessmentStatus.Forwarded
       ) {
         throw new Error("Assessment is not in a reviewable state");
       }
 
-      const hrId = assessment.user.hrId;
+      const hrId = assessment.user?.hrId;
 
       if (currentUserId !== assessment.nextApprover?.toString()) {
         throw new Error("You are not authorized to review this assessment");
@@ -299,22 +299,22 @@ const AssessmentService = {
 
       if (reviewData.status === "Forwarded") {
         // Only non-HR users can forward
-        if (currentUserId === hrId) {
+        if (currentUserId === hrId?.toString()) {
           throw new Error("HR can only approve assessments, not forward them");
         }
-        assessment.status = "Forwarded" as unknown as AssessmentStatus;
+        assessment.status = AssessmentStatus.Forwarded;
       } else if (reviewData.status === "Approved") {
-        if (currentUserId !== hrId) {
+        if (currentUserId !== hrId?.toString()) {
           throw new Error("Only HR can approve assessments");
         }
-        assessment.status = "Approved" as unknown as AssessmentStatus;
+        assessment.status = AssessmentStatus.Approved;
       } else {
-        assessment.status = "Forwarded" as unknown as AssessmentStatus;
+        assessment.status = AssessmentStatus.Forwarded;
       }
 
-      assessment.nextApprover = hrId;
-      if (currentUserId === hrId) {
-        assessment.nextApprover = null;
+      assessment.nextApprover = hrId ? parseInt(hrId.toString()) : undefined;
+      if (currentUserId === hrId?.toString()) {
+        assessment.nextApprover = undefined;
       }
       
       const reviewed = await assessmentRequestRepo.save(assessment);
@@ -343,7 +343,7 @@ const AssessmentService = {
       const approvedAssessments = await assessmentRequestRepo.find({
         where: {
           userId: userId.toString(),
-          status: "Approved" as unknown as AssessmentStatus,
+          status: AssessmentStatus.Approved,
         },
         order: { requestedAt: "DESC" } as any,
         relations: ["Score", "Score.Skill"],
@@ -413,7 +413,7 @@ const AssessmentService = {
     try {
       // Get all pending and forwarded assessments
       const allPendingAssessments = await assessmentRequestRepo.find({
-        where: { status: In(["Pending", "Forwarded"]) },
+        where: { status: In([AssessmentStatus.Pending, AssessmentStatus.Forwarded]) },
         relations: ["user", "user.position", "user.leadId", "user.hrId", "user.Team", "user.role"],
         order: { requestedAt: "ASC" } as any,
       });

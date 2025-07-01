@@ -10,6 +10,11 @@ export const User = new EntitySchema<UserType>({
       type: "varchar",
       unique: true,
     },
+    userId: {
+      type: "varchar",
+      unique: true,
+      nullable: false,
+    },
     name: {
       type: "varchar",
     },
