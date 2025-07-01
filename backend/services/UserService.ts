@@ -1,47 +1,19 @@
 import { AppDataSource } from "../config/dataSource";
-import { User as UserEntity } from "../entities/User";
-import { Role as RoleEntity } from "../entities/Role";
-import { Position as PositionEntity } from "../entities/Position";
-import { Team as TeamEntity } from "../entities/Team";
-import { Auth as AuthEntity } from "../entities/Auth";
-import { AssessmentRequest as AssessmentRequestEntity } from "../entities/AssessmentRequest";
-import { Score as ScoreEntity } from "../entities/Score";
-import { Skill as SkillEntity } from "../entities/Skill";
-import { position } from "../entities/Position";
 import { FindOptionsWhere } from "typeorm";
 import { UserData } from "../types/services";
-import { User, Role, Position, Team, Auth, AssessmentRequest, Score, Skill } from "../types/entities";
-
-const userRepo = AppDataSource.getRepository(UserEntity);
-const roleRepo = AppDataSource.getRepository(RoleEntity);
-const positionRepo = AppDataSource.getRepository(PositionEntity);
-const teamRepo = AppDataSource.getRepository(TeamEntity);
-const authRepo = AppDataSource.getRepository(AuthEntity);
-const assessmentRequestRepo = AppDataSource.getRepository(AssessmentRequestEntity);
-const scoreRepo = AppDataSource.getRepository(ScoreEntity);
-const skillRepo = AppDataSource.getRepository(SkillEntity);
-
-interface FilterOptions {
-  role?: string;
-  position?: string;
-  teamName?: string;
-  [key: string]: any;
-}
-
-interface ScoreWithSkill {
-  skillId: number;
-  skillName: string;
-  Score: number;
-}
-
-interface UserWithScores extends User {
-  mostRecentAssessmentScores: ScoreWithSkill[];
-  hasRecentAssessment: boolean;
-}
+// import { User, Role, Position, Team, Auth, AssessmentRequest, Score, Skill } from "../types/entities";
+import { userRepo, 
+  roleRepo, 
+  positionRepo, 
+  teamRepo, 
+  assessmentRequestRepo, 
+  scoreRepo, 
+  skillRepo } from '../config/dataSource'
+  import { UserType } from "../types/entities";
 
 const UserService = {
   // General user operations
-  getUserById: async (id: number | string): Promise<User> => {
+  getUserById: async (id: number | string): Promise<UserType> => {
     const user = await userRepo
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.role", "role")

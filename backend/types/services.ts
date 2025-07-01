@@ -1,4 +1,5 @@
 // Common types used across services
+import { UserType } from "./entities";
 
 export interface UserData {
   id?: number;
@@ -70,4 +71,22 @@ export interface ReviewData {
   status?: string;
   comments?: string;
   [key: string]: any;
+}
+
+interface FilterOptions {
+  role?: string;
+  position?: string;
+  teamName?: string;
+  [key: string]: any;
+}
+
+interface ScoreWithSkill {
+  skillId: number;
+  skillName: string;
+  Score: number;
+}
+
+interface UserWithScores extends UserType {
+  mostRecentAssessmentScores: ScoreWithSkill[];
+  hasRecentAssessment: boolean;
 }
