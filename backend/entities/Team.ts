@@ -1,14 +1,7 @@
 import { EntitySchema } from "typeorm";
+import { TeamType } from "../types/entities";
 
-export interface TeamEntity {
-  id: number;
-  name: string;
-  
-  // Relations
-  user?: any;
-}
-
-export const Team = new EntitySchema<TeamEntity>({
+export const Team = new EntitySchema<TeamType>({
   name: "Team",
   tableName: "teams",
   columns: {

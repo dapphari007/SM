@@ -1,22 +1,7 @@
 import { EntitySchema } from "typeorm";
+import { SkillType } from "../types/entities";
 
-export interface SkillEntity {
-  id: number;
-  name: string;
-  low?: string;
-  medium?: string;
-  average?: string;
-  high?: string;
-  createdAt: Date;
-  createdBy?: string;
-  position?: number[];
-  
-  // Relations
-  upgradeGuides?: any;
-  assessmentRequest?: any;
-}
-
-export const Skill = new EntitySchema<SkillEntity>({
+export const Skill = new EntitySchema<SkillType>({
   name: "Skill",
   tableName: "skills",
   columns: {

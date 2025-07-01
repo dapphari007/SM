@@ -1,19 +1,7 @@
 import { EntitySchema } from "typeorm";
+import { ScoreType } from "../types/entities";
 
-export interface ScoreEntity {
-  id: number;
-  assessmentId: number;
-  selfScore?: number;
-  leadScore?: number;
-  updatedAt: Date;
-  skillId: number;
-  
-  // Relations
-  Skill?: any;
-  AssessmentRequest?: any;
-}
-
-export const Score = new EntitySchema<ScoreEntity>({
+export const Score = new EntitySchema<ScoreType>({
   name: "Score",
   tableName: "scores",
   columns: {

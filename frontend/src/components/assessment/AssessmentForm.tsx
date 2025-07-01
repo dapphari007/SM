@@ -1,13 +1,8 @@
 import React from "react";
 import { Card, CardContent } from "../custom";
 import RatingControl from "./RatingControl";
+import  {AssessmentFormProps}  from "@/types/assessmentTypes";
 
-interface AssessmentFormProps {
-  skillCategories: any[];
-  assessments: { [skillId: number]: number | null };
-  isSubmitting: boolean;
-  handleSkillLevelChange: (skillId: number, level: number) => void;
-}
 
 const AssessmentForm = ({
   skillCategories,
@@ -92,7 +87,7 @@ const AssessmentForm = ({
                         <RatingControl
                           value={assessments[skill.id] || 0}
                           onChange={(level) =>
-                            handleSkillLevelChange(skill.id, level)
+                            handleSkillLevelChange(Number(skill.id), level)
                           }
                           disabled={isSubmitting}
                         />

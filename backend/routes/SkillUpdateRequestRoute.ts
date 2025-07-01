@@ -1,5 +1,5 @@
 import SkillUpdateRequestController from "../controllers/SkillUpdateRequestController";
-import { role } from "../entities/User";
+import { role } from "../enum/enum";
 import authorizeRoles from "../middlewares/authorizeRole";
 import { ServerRegisterOptions } from "@hapi/hapi";
 

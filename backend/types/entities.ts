@@ -1,25 +1,113 @@
-// Import entity types
-import { 
-  UserEntity, 
-  SkillEntity, 
-  RoleEntity, 
-  PositionEntity, 
-  TeamEntity, 
-  ScoreEntity, 
-  AssessmentRequestEntity,
-  SkillUpgradeGuideEntity,
-  AuditEntity,
-  AuthEntity
-} from '../entities';
+import { AssessmentStatus } from '../enum/enum';
 
-// Define runtime types for entities
-export type User = UserEntity;
-export type Skill = SkillEntity;
-export type Role = RoleEntity;
-export type Position = PositionEntity;
-export type Team = TeamEntity;
-export type Score = ScoreEntity;
-export type AssessmentRequest = AssessmentRequestEntity;
-export type SkillUpgradeGuide = SkillUpgradeGuideEntity;
-export type Audit = AuditEntity;
-export type Auth = AuthEntity;
+export interface UserType {
+  id: string;
+  name: string;
+  email: string;
+  roleId?: number;
+  teamId?: number;
+  positionId?: number;
+  leadId?: string;
+  hrId?: string;
+  profilePhoto?: string;
+  createdAt: Date;
+  
+  // Relations
+  Requests?: AssessmentRequestType;
+  role?: RoleType;
+  position?: PositionType;
+  Team?: TeamType;
+  Audit?: AuditType;
+}
+
+export interface TeamType {
+  id: number;
+  name: string;
+  
+  // Relations
+  user?: UserType;
+}
+
+export interface SkillUpgradeGuideType {
+  id: number;
+  fromLevel: number;
+  toLevel: number;
+  guidance: string;
+  resourceLink?: string;
+  skillId: number;
+  
+  // Relations
+  skill?: SkillType;
+}
+
+export interface SkillType {
+  id: number;
+  name: string;
+  low?: string;
+  medium?: string;
+  average?: string;
+  high?: string;
+  createdAt: Date;
+  createdBy?: string;
+  position?: number[];
+  
+  // Relations
+  upgradeGuides?: SkillUpgradeGuideType;
+  assessmentRequest?: AssessmentRequestType;
+}
+
+export interface ScoreType {
+  id: number;
+  assessmentId: number;
+  selfScore?: number;
+  leadScore?: number;
+  updatedAt: Date;
+  skillId: number;
+  
+  // Relations
+  Skill?: SkillType;
+  AssessmentRequest?: AssessmentRequestType;
+}
+
+export interface RoleType {
+  id: number;
+  name: string;
+  
+  // Relations
+  user?: UserType;
+}
+
+export interface PositionType {
+  id: number;
+  name: string;
+  
+  // Relations
+  user?: UserType;
+}
+
+export interface AuditType {
+  id: number;
+  assessmentId: number;
+  auditType?: string;
+  editorId: number;
+  auditedAt: Date;
+  comments?: string;
+  
+  // Relations
+  User?: UserType;
+  assessmentRequest?: AssessmentRequestType;
+}
+
+export interface AssessmentRequestType {
+  id: number;
+  userId: string;
+  requestedAt: Date;
+  status: AssessmentStatus;
+  nextApprover?: number;
+  
+  // Relations
+  Score?: ScoreType;
+  user?: UserType;
+  Audit?: AuditType;
+  skill?: SkillType;
+}

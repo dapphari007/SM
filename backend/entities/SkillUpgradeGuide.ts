@@ -1,18 +1,7 @@
 import { EntitySchema } from "typeorm";
+import { SkillUpgradeGuideType } from "../types/entities";
 
-export interface SkillUpgradeGuideEntity {
-  id: number;
-  fromLevel: number;
-  toLevel: number;
-  guidance: string;
-  resourceLink?: string;
-  skillId: number;
-  
-  // Relations
-  skill?: any;
-}
-
-export const SkillUpgradeGuide = new EntitySchema<SkillUpgradeGuideEntity>({
+export const SkillUpgradeGuide = new EntitySchema<SkillUpgradeGuideType>({
   name: "SkillUpgradeGuide",
   tableName: "skill_upgrade_guide",
   columns: {

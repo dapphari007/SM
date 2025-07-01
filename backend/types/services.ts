@@ -1,8 +1,8 @@
 // Common types used across services
+import { UserType } from "./entities";
 
 export interface UserData {
-  id?: number;
-  userId?: string;
+  id?: string;
   name?: string;
   email?: string;
   roleId?: number;
@@ -11,8 +11,8 @@ export interface UserData {
   teamName?: string;
   positionId?: number;
   position?: string | { id: number; name: string };
-  leadId?: number;
-  hrId?: number;
+  leadId?: string;
+  hrId?: string;
   profilePhoto?: string;
   password?: string;
   [key: string]: any;
@@ -70,4 +70,32 @@ export interface ReviewData {
   status?: string;
   comments?: string;
   [key: string]: any;
+}
+
+export interface FilterOptions {
+  role?: string;
+  position?: string;
+  teamName?: string;
+  [key: string]: any;
+}
+
+export interface ScoreWithSkill {
+  skillId: number;
+  skillName: string;
+  Score: number;
+}
+
+export interface UserWithScores extends UserType {
+  mostRecentAssessmentScores: ScoreWithSkill[];
+  hasRecentAssessment: boolean;
+}
+
+export interface LatestScore {
+  id: number;
+  self_score: number | null;
+  lead_score: number | null;
+  updated_at: Date;
+  skill_name: string;
+  skill_id: number;
+  requestedAt: Date;
 }

@@ -3,7 +3,7 @@ import Jwt from "@hapi/jwt";
 import { AppDataSource } from "../config/dataSource";
 import * as msal from "@azure/msal-node";
 import { User } from "../entities/User";
-import { Auth } from "../entities/Auth";
+// import { Auth } from "../entities/Auth";
 import dotenv from "dotenv";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller } from '../types/hapi';
@@ -11,7 +11,7 @@ import { Controller } from '../types/hapi';
 dotenv.config();
 
 const userRepo = AppDataSource.getRepository(User);
-const authRepo = AppDataSource.getRepository(Auth);
+// const authRepo = AppDataSource.getRepository(Auth);
 
 interface LoginPayload {
   email: string;
@@ -103,21 +103,20 @@ const AuthController: Controller = {
         await userRepo.save(user);
       }
 
-      const token = Jwt.token.generate(
-        {
-          id: user.id,
-          userId: user.userId,
-          role: user.role,
-          name: user.name,
-          email: user.email,
-          hrId: user.hrId,
-          leadId: user.leadId,
-          position: user.position,
-          Team: user.Team,
-        },
-        { key: process.env.JWT_SECRET_KEY as string, algorithm: "HS256" }
-      );
-      return h.redirect(`${process.env.FRONTEND_REDIRECT}?token=${token}`);
+      // const token = Jwt.token.generate(
+      //   {
+      //     id: user.id,
+      //     role: user.role,
+      //     name: user.name,
+      //     email: user.email,
+      //     hrId: user.hrId,
+      //     leadId: user.leadId,
+      //     position: user.position,
+      //     Team: user.Team,
+      //   },
+      //   { key: process.env.JWT_SECRET_KEY as string, algorithm: "HS256" }
+      // );
+      return h.redirect(`${process.env.FRONTEND_REDIRECT}`);
     } catch (error) {
       console.log(error);
       return h.response({ error: "Internal Server Error" }).code(500);
@@ -134,101 +133,100 @@ const AuthController: Controller = {
     return h.redirect(url);
   },
 
-  login: async (req: Request, h: ResponseToolkit) => {
-    try {
-      const { email, password } = req.payload as LoginPayload;
-      const auth = await authRepo
-        .createQueryBuilder("auth")
-        .addSelect("auth.passwordHash")
-        .where("auth.email = :email", { email: email })
-        .getOne();
+  // login: async (req: Request, h: ResponseToolkit) => {
+  //   try {
+  //     const { email, password } = req.payload as LoginPayload;
+  //     // const auth = await authRepo
+  //     //   .createQueryBuilder("auth")
+  //     //   .addSelect("auth.passwordHash")
+  //     //   .where("auth.email = :email", { email: email })
+  //     //   .getOne();
 
-      const user = await userRepo.findOne({
-        where: { email },
-        relations: ["role", "Team", "position"],
-      });
+  //     const user = await userRepo.findOne({
+  //       where: { email },
+  //       relations: ["role", "Team", "position"],
+  //     });
 
-      if (!user || !auth?.passwordHash) {
-        return h
-          .response({
-            error:
-              "Invalid username or password does not exist. Please sign up",
-          })
-          .code(401);
-      }
+  //     // if (!user || !auth?.passwordHash) {
+  //     //   return h
+  //     //     .response({
+  //     //       error:
+  //     //         "Invalid username or password does not exist. Please sign up",
+  //     //     })
+  //     //     .code(401);
+  //     // }
 
-      const isMatch = await bcrypt.compare(password, auth.passwordHash);
-      if (!isMatch) {
-        return h.response({ error: "Invalid credentials" }).code(401);
-      }
+  //     // const isMatch = await bcrypt.compare(password, auth.passwordHash);
+  //     // if (!isMatch) {
+  //     //   return h.response({ error: "Invalid credentials" }).code(401);
+  //     // }
 
-      const token = Jwt.token.generate(
-        {
-            id: user.id,
-          userId: user.userId,
-          role: user.role,
-          name: user.name,
-          email: user.email,
-          hrId: user.hrId,
-          leadId: user.leadId,
-          position: user.position,
-          Team: user.Team,
-        },
-        { key: process.env.JWT_SECRET_KEY as string, algorithm: "HS256" }
-      );
-      return h.response({ token, user }).code(200);
-    } catch (error) {
-      console.log(error);
-      return h.response({ error: "Internal Server Error" }).code(500);
-    }
-  },
+  //     const token = Jwt.token.generate(
+  //       {
+  //         id: user.id,
+  //         role: user.role,
+  //         name: user.name,
+  //         email: user.email,
+  //         hrId: user.hrId,
+  //         leadId: user.leadId,
+  //         position: user.position,
+  //         Team: user.Team,
+  //       },
+  //       { key: process.env.JWT_SECRET_KEY as string, algorithm: "HS256" }
+  //     );
+  //     return h.response({ token, user }).code(200);
+  //   } catch (error) {
+  //     console.log(error);
+  //     return h.response({ error: "Internal Server Error" }).code(500);
+  //   }
+  // },
 
-  signup: async (req: Request, h: ResponseToolkit) => {
-    try {
-      const { email, password } = req.payload as SignupPayload;
+  // signup: async (req: Request, h: ResponseToolkit) => {
+  //   try {
+  //     const { email, password } = req.payload as SignupPayload;
 
-      // validation
-      if (!email || !password) {
-        return h
-          .response({ error: "Email and Password are required fields" })
-          .code(400);
-      }
+  //     // validation
+  //     if (!email || !password) {
+  //       return h
+  //         .response({ error: "Email and Password are required fields" })
+  //         .code(400);
+  //     }
 
-      const existing = await userRepo.findOneBy({ email });
-      const authDetails = await authRepo.findOne({
-        where: { email: email },
-        select: ["id", "email", "passwordHash"] as any,
-      });
+  //     const existing = await userRepo.findOneBy({ email });
+  //     // const authDetails = await authRepo.findOne({
+  //     //   where: { email: email },
+  //     //   select: ["id", "email", "passwordHash"] as any,
+  //     // });
       
-      if (!existing) {
-        return h
-          .response({
-            error: "User not found for this email. Please Contact Admin",
-          })
-          .code(404);
-      }
+  //     if (!existing) {
+  //       return h
+  //         .response({
+  //           error: "User not found for this email. Please Contact Admin",
+  //         })
+  //         .code(404);
+  //     }
 
-      if (authDetails?.passwordHash) {
-        return h
-          .response({
-            error: "Password already set for this email address. Please Login",
-          })
-          .code(409);
-      }
+  //     // if (authDetails?.passwordHash) {
+  //     //   return h
+  //     //     .response({
+  //     //       error: "Password already set for this email address. Please Login",
+  //     //     })
+  //     //     .code(409);
+  //     // }
 
-      const passwordHash = await bcrypt.hash(password, 10);
+  //     // const passwordHash = await bcrypt.hash(password, 10);
 
-      if (authDetails) {
-        authDetails.passwordHash = passwordHash;
-        await authRepo.save(authDetails);
-      }
+  //     // if (authDetails) {
+  //     //   authDetails.passwordHash = passwordHash;
+  //     //   await authRepo.save(authDetails);
+  //     // }
 
-      return h.response({ message: "Password set successfully" }).code(201);
-    } catch (error) {
-      console.log(error);
-      return h.response({ error: "Internal Server Error" }).code(500);
-    }
-  },
+  //     return h.response({ message: "Password set successfully" }).code(201);
+  //   } catch (error) {
+  //     console.log(error);
+  //     return h.response({ error: "Internal Server Error" }).code(500);
+  //   }
+  // },
 };
 
 export default AuthController;

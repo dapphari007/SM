@@ -1,38 +1,21 @@
 import { In } from "typeorm";
-import { AppDataSource } from "../config/dataSource";
-import { AssessmentRequest as AssessmentRequestEntity } from "../entities/AssessmentRequest";
-import { Score as ScoreEntity } from "../entities/Score";
-import { User as UserEntity } from "../entities/User";
-import { Skill as SkillEntity } from "../entities/Skill";
-import { Audit as AuditEntity } from "../entities/Audit";
+import { AppDataSource, assessmentRequestRepo, scoreRepo, userRepo, skillRepo, AuditRepo } from "../config/dataSource";
 import { 
   AssessmentData, 
   SkillAssessmentData, 
   ReviewData, 
-  ScoreData 
+  ScoreData ,
+  LatestScore
 } from "../types/services";
-import { AssessmentRequest, Score, User, Skill, Audit } from "../types/entities";
+import { AssessmentRequestType, ScoreType, UserType, SkillType, AuditType } from "../types/entities";
+import { AssessmentStatus } from "../enum/enum";
 
-const assessmentRequestRepo = AppDataSource.getRepository(AssessmentRequestEntity);
-const scoreRepo = AppDataSource.getRepository(ScoreEntity);
-const userRepo = AppDataSource.getRepository(UserEntity);
-const skillRepo = AppDataSource.getRepository(SkillEntity);
-const auditRepo = AppDataSource.getRepository(AuditEntity);
-
-interface AssessmentWithScores extends Omit<AssessmentRequest, 'Score'> {
-  detailedScores: Score[];
-  Score?: Score[];
+interface AssessmentWithScores extends Omit<AssessmentRequestType, 'Score'> {
+  detailedScores: ScoreType[];
+  Score?: ScoreType[];
 }
 
-interface LatestScore {
-  id: number;
-  self_score: number | null;
-  lead_score: number | null;
-  updated_at: Date;
-  skill_name: string;
-  skill_id: number;
-  requestedAt: Date;
-}
+
 
 const AssessmentService = {
   createAssessment: async (
@@ -42,7 +25,7 @@ const AssessmentService = {
   ): Promise<AssessmentWithScores> => {
     try {
       // Validate user exists
-      const user = await userRepo.findOneBy({ id: parseInt(userId) });
+      const user = await userRepo.findOneBy({ id: userId });
       if (!user) {
         throw new Error("User not found");
       }
@@ -84,7 +67,7 @@ const AssessmentService = {
       }
       
       if (savedAssessment) {
-        await auditRepo.save({
+        await AuditRepo.save({
           assessmentId: savedAssessment.id,
           auditType: "Create",
           editorId: typeof userId === 'string' ? parseInt(userId) : userId,
@@ -102,7 +85,7 @@ const AssessmentService = {
     assessmentId: number,
     skillAssessments: SkillAssessmentData[],
     userId: string
-  ): Promise<Score[]> => {
+  ): Promise<ScoreType[]> => {
     try {
       const assessment = await assessmentRequestRepo.findOneBy({
         id: assessmentId,
@@ -112,9 +95,9 @@ const AssessmentService = {
         throw new Error("Assessment not found");
       }
 
-      const user = await userRepo.findOneBy({ id: typeof userId === 'string' ? parseInt(userId) : userId });
+      const user = await userRepo.findOneBy({ id: userId });
 
-      const scores: Score[] = [];
+      const scores: ScoreType[] = [];
 
       for (const skillAssessment of skillAssessments) {
         // Validate skill exists
@@ -190,9 +173,9 @@ const AssessmentService = {
     }
   },
 
-  getUserAssessments: async (userId: string | number): Promise<AssessmentWithScores[]> => {
+  getUserAssessments: async (userId: string ): Promise<AssessmentWithScores[]> => {
     try {
-      const user = await userRepo.findOneBy({ id: typeof userId === 'string' ? parseInt(userId as string) : userId });
+      const user = await userRepo.findOneBy({ id: userId });
       if (!user) {
         throw new Error("User not found");
       }
@@ -200,7 +183,7 @@ const AssessmentService = {
       const assessments = await assessmentRequestRepo.find({
         where: { userId: userId.toString() },
         relations: ["Score"],
-        order: { requestedAt: "DESC" } as any,
+        order: { requestedAt: "DESC" },
       });
 
       // Get detailed information for each assessment
@@ -223,18 +206,18 @@ const AssessmentService = {
     }
   },
 
-  getAllAssessments: async (): Promise<AssessmentRequest[]> => {
+  getAllAssessments: async (): Promise<AssessmentRequestType[]> => {
     try {
       return await assessmentRequestRepo.find({
         relations: ["user", "Score"],
-        order: { requestedAt: "DESC" } as any,
+        order: { requestedAt: "DESC" },
       });
     } catch (error: any) {
       throw new Error(`Failed to retrieve all assessments: ${error.message}`);
     }
   },
   
-  cancelAssessment: async (assessmentId: number): Promise<AssessmentRequest> => {
+  cancelAssessment: async (assessmentId: number): Promise<AssessmentRequestType> => {
     try {
       const assessment = await assessmentRequestRepo.findOneBy({
         id: assessmentId,
@@ -245,13 +228,13 @@ const AssessmentService = {
       }
 
       if (
-        assessment.status === "Approved" ||
-        assessment.status === "Forwarded"
+        assessment.status === "Approved" as unknown as AssessmentStatus ||
+        assessment.status === "Forwarded" as unknown as AssessmentStatus
       ) {
         throw new Error("Cannot cancel an approved or forwarded assessment");
       }
 
-      assessment.status = "Cancelled";
+      assessment.status = "Cancelled" as unknown as AssessmentStatus;
       await scoreRepo?.delete({ assessmentId: assessmentId });
       
       // Reset sequence for scores
@@ -284,8 +267,8 @@ const AssessmentService = {
       }
 
       if (
-        assessment.status !== "Pending" &&
-        assessment.status !== "Forwarded"
+        assessment.status !== "Pending" as unknown as AssessmentStatus &&
+        assessment.status !== "Forwarded" as unknown as AssessmentStatus
       ) {
         throw new Error("Assessment is not in a reviewable state");
       }
@@ -298,7 +281,7 @@ const AssessmentService = {
 
       // Update lead scores if provided
       if (reviewData.scoreUpdates && Array.isArray(reviewData.scoreUpdates)) {
-        for (const scoreUpdate of reviewData.scoreUpdates as any[]) {
+        for (const scoreUpdate of reviewData.scoreUpdates) {
           const score = await scoreRepo.findOneBy({
             skillId: scoreUpdate.skillId,
             assessmentId: assessmentId,
@@ -319,14 +302,14 @@ const AssessmentService = {
         if (currentUserId === hrId) {
           throw new Error("HR can only approve assessments, not forward them");
         }
-        assessment.status = "Forwarded";
+        assessment.status = "Forwarded" as unknown as AssessmentStatus;
       } else if (reviewData.status === "Approved") {
         if (currentUserId !== hrId) {
           throw new Error("Only HR can approve assessments");
         }
-        assessment.status = "Approved";
+        assessment.status = "Approved" as unknown as AssessmentStatus;
       } else {
-        assessment.status = "Forwarded";
+        assessment.status = "Forwarded" as unknown as AssessmentStatus;
       }
 
       assessment.nextApprover = hrId;
@@ -335,7 +318,7 @@ const AssessmentService = {
       }
       
       const reviewed = await assessmentRequestRepo.save(assessment);
-      await auditRepo.save({
+      await AuditRepo.save({
         assessmentId: reviewed.id,
         auditType: "Review",
         editorId: typeof currentUserId === 'string' ? parseInt(currentUserId) : currentUserId,
@@ -346,13 +329,13 @@ const AssessmentService = {
     }
   },
 
-  getUserLatestApprovedScores: async (userId: string | number): Promise<LatestScore[]> => {
+  getUserLatestApprovedScores: async (userId: string ): Promise<LatestScore[]> => {
     try {
       if (!userId) {
         throw new Error("User ID is required");
       }
       
-      const user = await userRepo.findOneBy({ id: typeof userId === 'string' ? parseInt(userId as string) : userId });
+      const user = await userRepo.findOneBy({ id: userId });
       if (!user) {
         throw new Error("User not found");
       }
@@ -360,7 +343,7 @@ const AssessmentService = {
       const approvedAssessments = await assessmentRequestRepo.find({
         where: {
           userId: userId.toString(),
-          status: "Approved",
+          status: "Approved" as unknown as AssessmentStatus,
         },
         order: { requestedAt: "DESC" } as any,
         relations: ["Score", "Score.Skill"],
@@ -408,7 +391,7 @@ const AssessmentService = {
   getNextApprover: async (id: string, hrId: string): Promise<string | null> => {
     try {
       const user = await userRepo.findOne({
-        where: { id: parseInt(id) },
+        where: { id },
       });
       
       if (!user) {

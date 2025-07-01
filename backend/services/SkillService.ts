@@ -1,13 +1,10 @@
-import { AppDataSource } from "../config/dataSource";
-import { Position as PositionEntity } from "../entities/Position";
-import { Skill as SkillEntity } from "../entities/Skill";
+import { AppDataSource, skillRepo } from "../config/dataSource";
+// import { Skill as SkillEntity } from "../entities/Skill";
 import { SkillData } from "../types/services";
-import { Skill, Position } from "../types/entities";
-
-const skillRepo = AppDataSource.getRepository(SkillEntity);
+import { SkillType } from "../types/entities";
 
 const SkillService = {
-  createSkill: async (skillData: SkillData): Promise<Skill> => {
+  createSkill: async (skillData: SkillData): Promise<SkillType> => {
     try {
       // Reset sequence to ensure proper ID generation
       await AppDataSource.query(`
@@ -24,18 +21,18 @@ const SkillService = {
       }
 
       // Create and save new skill
-      const newSkill = skillRepo.create(skillData as any);
+      const newSkill = skillRepo.create(skillData);
       const savedSkill = await skillRepo.save(newSkill);
-      return savedSkill as unknown as Skill;
+      return savedSkill;
     } catch (error: any) {
       throw new Error(`Failed to create skill: ${error.message}`);
     }
   },
 
-  updateSkill: async (updateData: SkillData): Promise<Skill> => {
+  updateSkill: async (updateData: SkillData): Promise<SkillType> => {
     try {
       const { id } = updateData;
-      const skill = await skillRepo.findOneBy({ id: id as number });
+      const skill = await skillRepo.findOneBy({ id });
       if (!skill) {
         throw new Error("Skill not found");
       }
@@ -58,7 +55,7 @@ const SkillService = {
     }
   },
 
-  deleteSkillById: async (id: number): Promise<Skill> => {
+  deleteSkillById: async (id: number): Promise<SkillType> => {
     try {
       const skill = await skillRepo.findOneBy({ id });
       if (!skill) {
@@ -71,7 +68,7 @@ const SkillService = {
     }
   },
 
-  getAllSkills: async (): Promise<Skill[]> => {
+  getAllSkills: async (): Promise<SkillType[]> => {
     try {
       return await skillRepo.find({
         order: { id: "ASC" } as any,
@@ -81,7 +78,7 @@ const SkillService = {
     }
   },
 
-  getSkillById: async (id: number): Promise<Skill> => {
+  getSkillById: async (id: number): Promise<SkillType> => {
     try {
       const skill = await skillRepo.findOneBy({ id });
       if (!skill) {
@@ -93,7 +90,7 @@ const SkillService = {
     }
   },
 
-  getSkillByPosition: async (position: number): Promise<Skill[]> => {
+  getSkillByPosition: async (position: number): Promise<SkillType[]> => {
     try {
       const skills = await skillRepo
         .createQueryBuilder("skill")
@@ -112,11 +109,11 @@ const SkillService = {
     }
   },
 
-  getSkillsWithUpgradeGuides: async (): Promise<Skill[]> => {
+  getSkillsWithUpgradeGuides: async (): Promise<SkillType[]> => {
     try {
       return await skillRepo.find({
         relations: ["upgradeGuides"],
-        order: { name: "ASC" } as any,
+        order: { name: "ASC" },
       });
     } catch (error: any) {
       throw new Error(
@@ -125,7 +122,7 @@ const SkillService = {
     }
   },
 
-  searchSkills: async (searchTerm: string): Promise<Skill[]> => {
+  searchSkills: async (searchTerm: string): Promise<SkillType[]> => {
     try {
       return await skillRepo
         .createQueryBuilder("skill")

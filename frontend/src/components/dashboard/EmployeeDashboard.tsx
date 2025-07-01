@@ -9,14 +9,7 @@ import DashboardStats from "./DashboardStats";
 import { Target, TrendingUp } from "lucide-react";
 import { userService, skillService, assessmentService } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
-
-interface SkillProgressItem {
-  id: string;
-  name: string;
-  current: number;
-  target: number;
-  category: string;
-}
+import {SkillProgressItem} from "../../types/dashboardTypes";
 
 const EmployeeDashboard = ({
   onNavigate,

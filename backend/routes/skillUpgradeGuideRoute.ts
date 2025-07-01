@@ -1,5 +1,5 @@
 import SkillUpgradeGuideController from "../controllers/SkillUpgradeGuideController";
-import { role } from "../entities/User";
+import { role } from "../enum/enum";
 import authorizeRoles from "../middlewares/authorizeRole";
 import { ServerRegisterOptions } from "@hapi/hapi";
 

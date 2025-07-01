@@ -36,12 +36,14 @@ const SkillUpdateRequestService = {
     return { currentReviewer: "next-reviewer" };
   }
 };
-import { AppDataSource } from "../config/dataSource";
-import { role, User } from "../entities/User";
+import { AppDataSource, roleRepo } from "../config/dataSource";
+// import { role, User } from "../entities/User";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
+import SkillService from '../services/SkillService';
+import { userRepo, } from "../config/dataSource";
 
-const userRepo = AppDataSource.getRepository(User);
+// const userRepo = AppDataSource.getRepository(User);
 
 interface SkillScore {
   skillId: number;
@@ -82,10 +84,10 @@ const SkillUpdateRequestController: Controller = {
           createdAt: new Date(),
         });
       
-      const user = await userRepo.findOneBy({ id: parseInt(targetUserId) });
+      const user = await userRepo.findOneBy({ id: (targetUserId) });
       if (!user) return h.response({ error: "User not found" }).code(404);
 
-      const reviewChain: number[] = [];
+      const reviewChain: string[] = [];
       let id = user.id;
       while (id) {
         const record = await userRepo.findOneBy({ id: id });
@@ -178,10 +180,14 @@ const SkillUpdateRequestController: Controller = {
       const { status, editedSkillScore, comments } = payload;
 
       const user = await userRepo.findOneBy({
-        id: parseInt(reviewedBy),
+        id: (reviewedBy),
       });
+      const role = await roleRepo.findOneBy({
+        id: user?.roleId
+      })
+
       
-      if(!user?.leadId && user?.role !== 'hr' && editedSkillScore){
+      if(!user?.leadId && role?.name !== "hr" && editedSkillScore){
         return h.response({error:"You are not allowed to edit skills"}).code(403);
       }
       
