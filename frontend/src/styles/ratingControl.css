@@ -1,0 +1,29 @@
+.cycle-control.rating-empty {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: transparent;
+}
+
+.cycle-control.rating-1 {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.cycle-control.rating-2 {
+  background: #fed7aa;
+  border-color: #f97316;
+  color: #ea580c;
+}
+
+.cycle-control.rating-3 {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #d97706;
+}
+
+.cycle-control.rating-4 {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #16a34a;
+}
