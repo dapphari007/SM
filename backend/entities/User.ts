@@ -73,11 +73,6 @@ export const User = new EntitySchema<UserType>({
       type: "one-to-many",
       inverseSide: "User",
     },
-    auth: {
-      target: "Auth",
-      type: "one-to-one",
-      inverseSide: "User",
-    },
     role: {
       target: "Role",
       type: "many-to-one",

@@ -1,5 +1,6 @@
 import UserController from "../controllers/UserController";
-import { role } from "../entities/User";
+// import { role } from "../entities/User";
+import { role } from "../enum/enum";
 import authorizeRoles from "../middlewares/authorizeRole";
 import { ServerRegisterOptions } from "@hapi/hapi";
 

@@ -1,15 +1,16 @@
 import { AppDataSource } from "../config/dataSource";
 import { FindOptionsWhere } from "typeorm";
-import { UserData } from "../types/services";
-// import { User, Role, Position, Team, Auth, AssessmentRequest, Score, Skill } from "../types/entities";
-import { userRepo, 
-  roleRepo, 
-  positionRepo, 
-  teamRepo, 
-  assessmentRequestRepo, 
-  scoreRepo, 
-  skillRepo } from '../config/dataSource'
-  import { UserType } from "../types/entities";
+import { UserData, FilterOptions, ScoreWithSkill, UserWithScores } from "../types/services";
+import { 
+  userRepo,
+  roleRepo,
+  positionRepo,
+  teamRepo,
+  assessmentRequestRepo,
+  scoreRepo,
+} from '../config/dataSource';
+import { AssessmentStatus } from '../enum/enum';
+import { PositionType, RoleType, TeamType, UserType } from "../types/entities";
 
 const UserService = {
   // General user operations
@@ -30,8 +31,8 @@ const UserService = {
     return user;
   },
 
-  getAllUsers: async (filter: FilterOptions = {}): Promise<User[]> => {
-    const where: FindOptionsWhere<User> = {};
+  getAllUsers: async (filter: FilterOptions = {}): Promise<UserType[]> => {
+    const where: FindOptionsWhere<UserType> = {};
     console.log(filter);
 
     // Handle filtering by related entities
@@ -55,7 +56,7 @@ const UserService = {
   },
 
   // Hr CRUD Operations
-  createUser: async (data: UserData): Promise<User> => {
+  createUser: async (data: UserData): Promise<void> => {
     await AppDataSource.query(`
     SELECT setval(
       pg_get_serial_sequence('users', 'id'),
@@ -73,40 +74,27 @@ const UserService = {
     if (data.role && typeof data.role === "string") {
       const role = await roleRepo.findOneBy({ name: data.role });
       if (role) userData.roleId = role.id;
-      delete userData.role;
     }
+    delete userData.role;
 
     if (data.position && typeof data.position === "string") {
       const position = await positionRepo.findOneBy({ name: data.position });
       if (position) userData.positionId = position.id;
-      delete userData.position;
     }
+    delete userData.position;
 
     if (data.teamName && typeof data.teamName === "string") {
       const team = await teamRepo.findOneBy({ name: data.teamName });
       if (team) userData.teamId = team.id;
-      delete userData.teamName;
-    }
-
-    const newUser = userRepo.create(userData as any);
-    const savedUser = await userRepo.save(newUser);
-    const authDetails = authRepo.create({
-      email: userData.email,
-      passwordHash: userData.password ? userData.password : null,
-    });
-    await authRepo.save(authDetails);
-
-    // If this user is assigned as a lead to someone, update their role to 'lead'
+    }    // If this user is assigned as a lead to someone, update their role to 'lead'
     if (data.leadId) {
       await UserService.ensureLeadRole(data.leadId);
     }
-
-    return savedUser as unknown as User;
   },
 
-  updateUser: async (data: UserData): Promise<User> => {
-    const id = data.id;
-    const user = await userRepo.findOneBy({ id: id as number });
+  updateUser: async (data: UserData): Promise<UserType> => {
+    const id: string = data.id;
+    const user = await userRepo.findOneBy({ id: id  });
     if (!user) throw new Error("User not found");
 
     // Check if leadId is being updated
@@ -118,34 +106,34 @@ const UserService = {
     if (data.role && typeof data.role === "string") {
       const role = await roleRepo.findOneBy({ name: data.role });
       if (role) userData.roleId = role.id;
-      delete userData.role;
     }
-
+    
     if (data.position && typeof data.position === "string") {
       const position = await positionRepo.findOneBy({ name: data.position });
       if (position) userData.positionId = position.id;
-      delete userData.position;
     }
-
+    
     if (data.teamName && typeof data.teamName === "string") {
       const team = await teamRepo.findOneBy({ name: data.teamName });
       if (team) userData.teamId = team.id;
-      delete userData.teamName;
     }
+    delete userData.role;
+    delete userData.position;
+    delete userData.teamName;
 
     userRepo.merge(user, userData as any); // accepts only the valid fields for update
     const updatedUser = await userRepo.save(user);
 
     // If leadId was updated, ensure the lead has the 'lead' role
     if (leadIdChanged) {
-      await UserService.ensureLeadRole(data.leadId as number);
+      await UserService.ensureLeadRole(data.leadId);
     }
 
     return updatedUser;
   },
 
   // Helper method to ensure a user has the 'lead' role
-  ensureLeadRole: async (userId: number): Promise<void> => {
+  ensureLeadRole: async (userId: string): Promise<void> => {
     const lead = await userRepo.findOne({
       where: { id: userId },
       relations: ["role"],
@@ -164,13 +152,13 @@ const UserService = {
     }
   },
 
-  deleteUser: async (id: number): Promise<User> => {
+  deleteUser: async (id: string): Promise<UserType> => {
     const user = await userRepo.findOneBy({ id });
     if (!user) throw new Error("User not found");
     return await userRepo.remove(user);
   },
 
-  getTeamMembers: async (teamId: number): Promise<User[]> => {
+  getTeamMembers: async (teamId: number): Promise<UserType[]> => {
     try {
       const members = await userRepo.find({
         where: { teamId: teamId },
@@ -185,11 +173,12 @@ const UserService = {
 
   getMostRecentApprovedScores: async (userId: number | string): Promise<ScoreWithSkill[]> => {
     try {
+      const status = 'Approved'
       // Get the most recent approved assessment for the user
       const latestApprovedAssessment = await assessmentRequestRepo.findOne({
         where: {
           userId: userId.toString(),
-          status: "Approved",
+          status: status as unknown as AssessmentStatus,
         },
         order: {
           requestedAt: "DESC",
@@ -229,7 +218,7 @@ const UserService = {
         where: {
           teamId: team.id,
         },
-        select: ["id", "userId", "name"] as any,
+        select: ["id", "name"],
         relations: ["role", "position", "Team"],
       });
 
@@ -256,7 +245,7 @@ const UserService = {
   getFullSkillMatrix: async (): Promise<UserWithScores[]> => {
     try {
       const users = await userRepo.find({
-        select: ["id", "userId", "name"] as any,
+        select: ["id", "name"],
         relations: ["role", "position", "Team"],
       });
 
@@ -280,15 +269,15 @@ const UserService = {
     }
   },
 
-  getAllPositions: async (): Promise<Position[]> => {
+  getAllPositions: async (): Promise<PositionType[]> => {
     return await positionRepo.find();
   },
   
-  getAllRoles: async (): Promise<Role[]> => {
+  getAllRoles: async (): Promise<RoleType[]> => {
     return await roleRepo.find();
   },
   
-  getAllTeams: async (): Promise<Team[]> => {
+  getAllTeams: async (): Promise<TeamType[]> => {
     return await teamRepo.find();
   },
 };

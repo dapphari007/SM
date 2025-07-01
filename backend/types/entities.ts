@@ -7,18 +7,17 @@ export interface UserType {
   roleId?: number;
   teamId?: number;
   positionId?: number;
-  leadId?: number;
-  hrId?: number;
+  leadId?: string;
+  hrId?: string;
   profilePhoto?: string;
   createdAt: Date;
   
   // Relations
-  Requests?: any;
-  auth?: any;
-  role?: any;
-  position?: any;
-  Team?: any;
-  Audit?: any;
+  Requests?: AssessmentRequestType;
+  role?: RoleType;
+  position?: PositionType;
+  Team?: TeamType;
+  Audit?: AuditType;
 }
 
 export interface TeamType {
@@ -26,7 +25,7 @@ export interface TeamType {
   name: string;
   
   // Relations
-  user?: any;
+  user?: UserType;
 }
 
 export interface SkillUpgradeGuideType {
@@ -38,7 +37,7 @@ export interface SkillUpgradeGuideType {
   skillId: number;
   
   // Relations
-  skill?: any;
+  skill?: SkillType;
 }
 
 export interface SkillType {
@@ -53,8 +52,8 @@ export interface SkillType {
   position?: number[];
   
   // Relations
-  upgradeGuides?: any;
-  assessmentRequest?: any;
+  upgradeGuides?: SkillUpgradeGuideType;
+  assessmentRequest?: AssessmentRequestType;
 }
 
 export interface ScoreType {
@@ -66,8 +65,8 @@ export interface ScoreType {
   skillId: number;
   
   // Relations
-  Skill?: any;
-  AssessmentRequest?: any;
+  Skill?: SkillType;
+  AssessmentRequest?: AssessmentRequestType;
 }
 
 export interface RoleType {
@@ -75,7 +74,7 @@ export interface RoleType {
   name: string;
   
   // Relations
-  user?: any;
+  user?: UserType;
 }
 
 export interface PositionType {
@@ -83,7 +82,7 @@ export interface PositionType {
   name: string;
   
   // Relations
-  user?: any;
+  user?: UserType;
 }
 
 export interface AuditType {
@@ -95,8 +94,8 @@ export interface AuditType {
   comments?: string;
   
   // Relations
-  User?: any;
-  assessmentRequest?: any;
+  User?: UserType;
+  assessmentRequest?: AssessmentRequestType;
 }
 
 export interface AssessmentRequestType {
@@ -107,8 +106,8 @@ export interface AssessmentRequestType {
   nextApprover?: number;
   
   // Relations
-  Score?: any;
-  user?: any;
-  Audit?: any;
-  skill?: any;
+  Score?: ScoreType;
+  user?: UserType;
+  Audit?: AuditType;
+  skill?: SkillType;
 }
