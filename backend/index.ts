@@ -7,17 +7,18 @@ import guideRoutes from "./routes/skillUpgradeGuideRoute";
 import requestRoutes from "./routes/SkillUpdateRequestRoute";
 import Jwt from "@hapi/jwt";
 import authRoutes from "./routes/AuthRoute";
-// import { seedInitialData } from "./seeder.js";
+// import { seedInitialData } from "./seeder";
 import assessmentRoutes from "./routes/AssessmentRoute";
 
 dotenv.config();
 
-// to seed initial data use this function
-// await seedInitialData();
-
 const init = async () => {
+  // Initialize database connection first
   await AppDataSource.initialize();
   console.log("Database connected");
+  
+  // Then seed initial data
+  // await seedInitialData();
 
   const server = Hapi.server({
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
