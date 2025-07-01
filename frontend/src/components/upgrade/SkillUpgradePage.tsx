@@ -30,38 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Resource {
-  id: string;
-  title: string;
-  type: "Course" | "Documentation" | "Tutorial" | "Book";
-  url: string;
-}
-
-interface LearningPath {
-  id: string;
-  skillId: string;
-  skillName: string;
-  currentLevel: number;
-  targetLevel: number;
-  priority: "High" | "Medium" | "Low";
-  resources: Resource[];
-  guidance?: string;
-}
-
-interface Skill {
-  id: string;
-  name: string;
-  level?: number;
-}
-
-interface UpgradeGuide {
-  id: string;
-  fromLevel: number;
-  toLevel: number;
-  guidance: string;
-  resourceLink?: string;
-}
+import {Resource,LearningPath,Skill,UpgradeGuide} from "../../types/upgradeTypes";
 
 const SKILL_LEVELS = [
   { value: 1, label: "Low", color: "bg-red-100 text-red-800" },
@@ -451,12 +420,9 @@ const SkillUpgradePage = () => {
                     : "hover:shadow-md"
                 }`}
               >
-                <CardContent
-                  className="p-4"
-                  onClick={() =>
-                    setSelectedPath(selectedPath === path.id ? null : path.id)
-                  }
-                >
+                <div onClick={() =>
+                    setSelectedPath(selectedPath === path.id ? null : path.id)}>
+                <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-semibold text-lg">
@@ -491,6 +457,7 @@ const SkillUpgradePage = () => {
                     <div>{path.resources.length} resources</div>
                   </div>
                 </CardContent>
+                </div>
               </Card>
             ))
           ) : (

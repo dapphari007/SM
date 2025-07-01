@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-
+import {SkillMatrixData,Skill} from "../types/matrixTypes";
   const getRoleColor = (role: string) => {
     switch (role) {
       case "hr":
@@ -39,7 +39,7 @@ import autoTable from "jspdf-autotable";
 
   // Helper function to calculate average skill level for an employee
   const getAverageSkillLevel = (employee: SkillMatrixData): number => {
-    if (employee.mostRecentAssessmentScores.length === 0) return 0;
+    if (!employee || !employee.mostRecentAssessmentScores || employee.mostRecentAssessmentScores.length === 0) return 0;
     const total = employee.mostRecentAssessmentScores.reduce(
       (sum, score) => sum + score.Score,
       0

@@ -8,38 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { exportPDF, getAverageSkillLevel, getSkillLevelColor, getSkillScore } from "@/utils/helper";
-
-
-interface SkillScore {
-  skillId: number;
-  skillName: string;
-  Score: number;
-}
-
-interface SkillMatrixData {
-  id: number;
-  userId: string;
-  name: string;
-  role: {
-    id: number;
-    name: string;
-  };
-  position: {
-    id: number;
-    name: string;
-  };
-  Team: {
-    id: number;
-    name: string;
-  };
-  mostRecentAssessmentScores: SkillScore[];
-  hasRecentAssessment: boolean;
-}
-
-interface Skill {
-  id: number;
-  name: string;
-}
+import {SkillScore,SkillMatrixData,Skill} from "../../types/matrixTypes";
 
 const SkillMatrixPage = () => {
   const { user } = useAuth();

@@ -10,17 +10,10 @@ import { Grid3X3, Save, RefreshCw } from "lucide-react";
 import { assessmentService, skillService } from "@/services/api";
 import { toast } from "sonner";
 import AssessmentForm from "./AssessmentForm";
-
-interface SkillCategory {
-  id: string;
-  name: string;
-  skills: string[];
+import {SkillCategory,SkillAssessment} from "../../types/assessmentTypes";
+export interface AssessmentFormProps{
+  skillCategories:SkillCategory[];
 }
-
-interface SkillAssessment {
-  [skillId: number]: number | null;
-}
-
 const SkillAssessmentPage = () => {
   const { user } = useAuth();
   const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);

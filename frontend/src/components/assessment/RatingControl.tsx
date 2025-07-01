@@ -1,11 +1,7 @@
 import React from "react";
 import "../../styles/ratingControl.css"
+import { RatingControlProps } from "@/types/assessmentTypes";
 
-interface RatingControlProps {
-  value: number;
-  onChange: (value: number) => void;
-  disabled?: boolean;
-}
 
 const RatingControl: React.FC<RatingControlProps> = ({
   value = 0,

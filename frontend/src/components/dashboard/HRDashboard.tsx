@@ -24,36 +24,41 @@ const HRDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
   const fetchDashboardData = async () => {
     try {
       const matrix = await userService.getFullMatrix();
-      const skillDetails = matrix.find((hr: User) => hr.userId === user.userId)
+      const skillDetails = matrix.find((hr: any) => hr.userId === user.id)
       const pendingRequests = await assessmentService.getMyAssignedAssessments();
       const teamsData = await teamService.getAllTeams();
       const criteria = await skillService.getAllSkills();
-      const userSkills = skillDetails.mostRecentAssessmentScores;
+      
+      // Check if skillDetails exists and has mostRecentAssessmentScores
+      const userSkills = skillDetails?.mostRecentAssessmentScores || [];
       const skillStats = {
-        low: userSkills.filter((skill) => skill.Score <= 1).length,
-        medium: userSkills.filter(
+        low: userSkills.length > 0 ? userSkills.filter((skill) => skill.Score <= 1).length : 0,
+        medium: userSkills.length > 0 ? userSkills.filter(
           (skill) => skill.Score > 1 && skill.Score <= 2
-        ).length,
-        average: userSkills.filter(
+        ).length : 0,
+        average: userSkills.length > 0 ? userSkills.filter(
           (skill) => skill.Score > 2 && skill.Score <= 3
-        ).length,
-        high: userSkills.filter((skill) => skill.Score > 3).length,
+        ).length : 0,
+        high: userSkills.length > 0 ? userSkills.filter((skill) => skill.Score > 3).length : 0,
       };
       const avg: number = matrix.length
-                  ? (
+                  ? parseFloat((
                       matrix.reduce(
-                        (acc, m) => acc + getAverageSkillLevel(m),
+                        (acc, m) => {
+                          const skillLevel = getAverageSkillLevel(m);
+                          return acc + skillLevel;
+                        },
                         0
                       ) / matrix.length
-                    ).toFixed(1)
+                    ).toFixed(1))
                   : 0;
 
       setStats(skillStats);
-      setPendingRequests(pendingRequests.length || 0);
+      setPendingRequests(pendingRequests?.length || 0);
       setOrganizationStats({
-        totalEmployees: matrix.length,
-        teams: teamsData.length,
-        skillCriteria: criteria.length,
+        totalEmployees: matrix?.length || 0,
+        teams: teamsData?.length || 0,
+        skillCriteria: criteria?.length || 0,
         avgOrgSkillLevel: avg
       });
     } catch (error) {
