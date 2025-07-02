@@ -1,4 +1,4 @@
-import { position } from "../entities/User";
+import { position } from "../enum/enum";
 
 export default [
     {

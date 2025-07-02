@@ -23,35 +23,8 @@ import { assessmentService } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import RatingControl from "./RatingControl";
+import {Assessment,score} from "@/types/assessmentTypes";
 
-interface Score {
-  id: number;
-  skillId: number;
-  assessmentId: number;
-  selfScore: number;
-  leadScore: number | null;
-  Skill: {
-    id: number;
-    name: string;
-  };
-}
-
-interface Assessment {
-  id: number;
-  userId: number;
-  status: string;
-  requestedAt: string;
-  nextApprover: number;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    position: {
-      name: string;
-    };
-  };
-  detailedScores: Score[];
-}
 
 const PendingAssessmentsPage = () => {
   const { user } = useAuth();
@@ -408,7 +381,7 @@ const PendingAssessmentsPage = () => {
                             {selectedAssessment.detailedScores.map((score) => (
                               <tr key={score.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                  {score.Skill.name}
+                                  {score.skill.name}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                   {getScoreBadge(score.selfScore)}

@@ -16,18 +16,7 @@ import {
 import { positionService, skillService } from "@/services/api";
 import SkillCreationModal from "./SkillCreationModal";
 import DeleteModal from "../../lib/DeleteModal";
-
-interface SkillCriterion {
-  id: number;
-  name: string;
-  low: string;
-  medium: string;
-  average: string;
-  high: string;
-  createdAt: string;
-  createdBy: string;
-  position: number[];
-}
+import {SkillCriterion} from "../../types/criteria";
 
 const SkillCriteriaPage = () => {
   const { user } = useAuth();

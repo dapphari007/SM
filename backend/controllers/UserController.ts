@@ -1,8 +1,7 @@
 import UserService from "../services/UserService";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
-import {UserData} from "../types/controller";
-
+import { UserData } from "../types/controller";
 
 const UserController: Controller = {
   getUserById: async (req: AuthRequest, h: ResponseToolkit) => {
@@ -26,7 +25,7 @@ const UserController: Controller = {
 
   createUser: async (req: Request, h: ResponseToolkit) => {
     try {
-      const data = req.payload as UserData;
+      const data = req.payload as any;
       if(!data.userId || !data.name){
         return h.response({error:"Missing required fields ID and Name"}).code(400);
       }
@@ -40,7 +39,7 @@ const UserController: Controller = {
 
   updateUser: async (req: Request, h: ResponseToolkit) => {
     try {
-      const updated = await UserService.updateUser(req.payload as UserData);
+      const updated = await UserService.updateUser(req.payload as any);
       return h.response({message: "Updated successfully!"}).code(200);
     } catch (err: any) {
       return h.response({ error: err.message }).code(404);

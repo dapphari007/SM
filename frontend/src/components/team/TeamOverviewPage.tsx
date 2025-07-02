@@ -29,46 +29,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-interface TeamMember {
-  id: string;
-  userId: string;
-  name: string;
-  email?: string;
-  role: {
-    id: number;
-    name: string;
-  };
-  position: {
-    id: number;
-    name: string;
-  };
-  Team: {
-    id: number;
-    name: string;
-  };
-  mostRecentAssessmentScores: Array<{
-    skillId: number;
-    skillName: string;
-    Score: number;
-  }>;
-  hasRecentAssessment: boolean;
-}
-
-interface SkillScore {
-  id: number;
-  self_score: number;
-  lead_score: number;
-  updated_at: string;
-  skill_name: string;
-  skill_id: number;
-  requestedAt: string;
-}
-
-interface SkillModalData {
-  memberName: string;
-  skills: SkillScore[];
-}
+import{TeamMember,SkillScore,SkillModalData} from "../../types/teamTypes";
 
 const TeamOverviewPage = () => {
   const { user } = useAuth();

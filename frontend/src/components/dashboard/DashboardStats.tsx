@@ -1,17 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/custom";
-
-interface SkillStats {
-  low: number;
-  medium: number;
-  average: number;
-  high: number;
-}
-
-interface DashboardStatsProps {
-  stats: SkillStats;
-  pendingRequests?: number;
-  title: string;
-}
+import {SkillStats,DashboardStatsProps} from "../../types/dashboardTypes";
 
 const DashboardStats = ({
   stats,

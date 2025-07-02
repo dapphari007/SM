@@ -1,22 +1,8 @@
 import { EntitySchema } from "typeorm";
+import { AssessmentRequestType } from '../types/entities';
+import { AssessmentStatus } from "../enum/enum";
 
-export type AssessmentStatus = "Pending" | "Approved" | "Cancelled" | "Forwarded";
-
-export interface AssessmentRequestEntity {
-  id: number;
-  userId: string;
-  requestedAt: Date;
-  status: AssessmentStatus;
-  nextApprover?: number;
-  
-  // Relations
-  Score?: any;
-  user?: any;
-  Audit?: any;
-  skill?: any;
-}
-
-export const AssessmentRequest = new EntitySchema<AssessmentRequestEntity>({
+export const AssessmentRequest = new EntitySchema<AssessmentRequestType>({
   name: "AssessmentRequest",
   tableName: "assessment_requests",
   columns: {
@@ -34,7 +20,7 @@ export const AssessmentRequest = new EntitySchema<AssessmentRequestEntity>({
     },
     status: {
       type: "enum",
-      enum: ["Pending", "Approved", "Cancelled", "Forwarded"],
+      enum: AssessmentStatus,
       default: "Pending",
     },
     nextApprover: {

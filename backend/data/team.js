@@ -1,4 +1,4 @@
-import { teamName } from "../entities/User";
+import { teamName } from "../enum/enum";
 
 export default [
     {

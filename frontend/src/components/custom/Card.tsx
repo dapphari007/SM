@@ -1,36 +1,5 @@
 import React from 'react';
-
-interface CardProps {
-  children: React.ReactNode;
-  className?: string;
-  onClick?: () => void;
-}
-
-interface CardHeaderProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface CardTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface CardDescriptionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface CardContentProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface CardFooterProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
+import {CardProps,CardHeaderProps,CardTitleProps, CardDescriptionProps,CardContentProps,CardFooterProps} from "../../types/cardTypes"
 export const Card: React.FC<CardProps> = ({ children, className = '', onClick }) => {
   return (
     <div

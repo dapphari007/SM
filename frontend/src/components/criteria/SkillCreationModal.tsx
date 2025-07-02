@@ -35,36 +35,8 @@ import {
   AlertCircle,
   ChevronDown,
 } from "lucide-react";
+import {Position,SkillCreationModalProps,SkillData,UpgradeGuide} from "../../types/criteria";
 
-interface Position {
-  id: number;
-  name: string;
-}
-
-interface SkillCreationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  editSkill?: SkillData & { id: number; position?: number[] };
-  mode?: "create" | "edit";
-}
-
-interface SkillData {
-  name: string;
-  low: string;
-  medium: string;
-  average: string;
-  high: string;
-  position?: number[];
-}
-
-interface UpgradeGuide {
-  fromLevel: number;
-  toLevel: number;
-  guidance: string;
-  resourceLink: string;
-  skillId: number | null;
-}
 
 const SKILL_LEVELS = [
   { value: 1, label: "Low", color: "bg-red-100 text-red-800" },

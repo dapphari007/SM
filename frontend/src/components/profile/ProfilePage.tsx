@@ -13,41 +13,8 @@ import {
 } from "lucide-react";
 import { assessmentService, userService } from "@/services/api";
 import { toast } from "sonner";
+import {UserProfile,Skill} from "../../types/profileTypes";
 
-interface Skill {
-  skill_id: number;
-  skill_name: string;
-  lead_score: number;
-  targetLevel?: 4;
-}
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  role: {
-    id: string;
-    name: string;
-  };
-  Team?: {
-    id: string;
-    name: string;
-  };
-  position?: {
-    id: string;
-    name: string;
-  };
-  leadId?: {
-    name: string;
-  };
-  hrId?: {
-    name: string;
-  };
-  userId?: string;
-  createdAt?: string;
-  skills?: Skill[];
-  data?: Skill[];
-}
 
 const ProfilePage = () => {
   const { user } = useAuth();
@@ -80,11 +47,7 @@ const ProfilePage = () => {
     fetchUserProfile();
   }, []);
 
-
-
   console.log("profileData", profileData);
-
-
   console.log(skills);
 
   if (isLoading) {

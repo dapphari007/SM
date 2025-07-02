@@ -2,13 +2,13 @@ import { AppDataSource } from "../config/dataSource";
 import { SkillUpgradeGuide as SkillUpgradeGuideEntity } from "../entities/SkillUpgradeGuide";
 import { Skill as SkillEntity } from "../entities/Skill";
 import { GuideData } from "../types/services";
-import { SkillUpgradeGuide, Skill } from "../types/entities";
+import { SkillUpgradeGuideType, SkillType } from "../types/entities";
 
 const skillUpgradeGuideRepo = AppDataSource.getRepository(SkillUpgradeGuideEntity);
 const skillRepo = AppDataSource.getRepository(SkillEntity);
 
 const SkillUpgradeGuideService = {
-  getGuide: async (skillId: number, fromLevel: number, toLevel: number): Promise<SkillUpgradeGuide> => {
+  getGuide: async (skillId: number, fromLevel: number, toLevel: number): Promise<SkillUpgradeGuideType> => {
     try {
       const guide = await skillUpgradeGuideRepo.findOne({
         where: { skillId: skillId, fromLevel: fromLevel, toLevel: toLevel },
@@ -25,7 +25,7 @@ const SkillUpgradeGuideService = {
     }
   },
 
-  createGuide: async (data: GuideData): Promise<SkillUpgradeGuide> => {
+  createGuide: async (data: GuideData): Promise<SkillUpgradeGuideType> => {
     try {
       await AppDataSource.query(`
         SELECT setval(
@@ -60,15 +60,15 @@ const SkillUpgradeGuideService = {
         throw new Error("From level must be less than to level");
       }
 
-      const newGuide = skillUpgradeGuideRepo.create(data as any);
+      const newGuide = skillUpgradeGuideRepo.create(data);
       const savedGuide = await skillUpgradeGuideRepo.save(newGuide);
-      return savedGuide as unknown as SkillUpgradeGuide;
+      return savedGuide;
     } catch (error: any) {
       throw new Error(`Failed to create guide: ${error.message}`);
     }
   },
 
-  updateGuide: async (data: GuideData): Promise<SkillUpgradeGuide> => {
+  updateGuide: async (data: GuideData): Promise<SkillUpgradeGuideType> => {
     try {
       const id = data.id;
       const guide = await skillUpgradeGuideRepo.findOne({
@@ -113,14 +113,14 @@ const SkillUpgradeGuideService = {
         }
       }
 
-      skillUpgradeGuideRepo.merge(guide, data as any);
+      skillUpgradeGuideRepo.merge(guide, data);
       return await skillUpgradeGuideRepo.save(guide);
     } catch (error: any) {
       throw new Error(`Failed to update guide: ${error.message}`);
     }
   },
 
-  deleteGuide: async (id: number): Promise<SkillUpgradeGuide> => {
+  deleteGuide: async (id: number): Promise<SkillUpgradeGuideType> => {
     try {
       const guide = await skillUpgradeGuideRepo.findOneBy({ id });
       if (!guide) {
@@ -133,7 +133,7 @@ const SkillUpgradeGuideService = {
     }
   },
 
-  getAllGuidesBySkillId: async (skillId: number): Promise<SkillUpgradeGuide[]> => {
+  getAllGuidesBySkillId: async (skillId: number): Promise<SkillUpgradeGuideType[]> => {
     try {
       // Validate that the skill exists
       const skill = await skillRepo.findOneBy({ id: skillId });
@@ -144,7 +144,7 @@ const SkillUpgradeGuideService = {
       const guides = await skillUpgradeGuideRepo.find({
         where: { skillId: skillId },
         relations: ["skill"],
-        order: { fromLevel: "ASC", toLevel: "ASC" } as any,
+        order: { fromLevel: "ASC", toLevel: "ASC" },
       });
 
       return guides;
@@ -153,18 +153,18 @@ const SkillUpgradeGuideService = {
     }
   },
 
-  getAllGuides: async (): Promise<SkillUpgradeGuide[]> => {
+  getAllGuides: async (): Promise<SkillUpgradeGuideType[]> => {
     try {
       return await skillUpgradeGuideRepo.find({
         relations: ["skill"],
-        order: { skillId: "ASC", fromLevel: "ASC", toLevel: "ASC" } as any,
+        order: { skillId: "ASC", fromLevel: "ASC", toLevel: "ASC" },
       });
     } catch (error: any) {
       throw new Error(`Failed to retrieve all guides: ${error.message}`);
     }
   },
 
-  getGuidesByLevelRange: async (skillId: number, currentLevel: number): Promise<SkillUpgradeGuide[]> => {
+  getGuidesByLevelRange: async (skillId: number, currentLevel: number): Promise<SkillUpgradeGuideType[]> => {
     try {
       const skill = await skillRepo.findOneBy({ id: skillId });
       if (!skill) {
@@ -174,7 +174,7 @@ const SkillUpgradeGuideService = {
       const guides = await skillUpgradeGuideRepo.find({
         where: { skillId: skillId, fromLevel: currentLevel },
         relations: ["skill"],
-        order: { toLevel: "ASC" } as any,
+        order: { toLevel: "ASC" },
       });
 
       return guides;
@@ -185,7 +185,7 @@ const SkillUpgradeGuideService = {
     }
   },
 
-  getGuideById: async (id: number): Promise<SkillUpgradeGuide> => {
+  getGuideById: async (id: number): Promise<SkillUpgradeGuideType> => {
     try {
       const guide = await skillUpgradeGuideRepo.findOne({
         where: { id },

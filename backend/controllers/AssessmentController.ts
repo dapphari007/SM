@@ -2,7 +2,7 @@ import AssessmentService from "../services/AssessmentService";
 import Boom from "@hapi/boom";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
-import {SkillAssessment,AssessmentPayload,ReviewData} from "../types/controller";
+import { SkillAssessment, AssessmentPayload , ReviewData } from '../types/controller'
 
 const AssessmentController: Controller = {
   // Create a new assessment
@@ -106,7 +106,7 @@ const AssessmentController: Controller = {
     try {
       const { userId } = req.params;
       const assessments = await AssessmentService.getUserAssessments(
-        parseInt(userId)
+        userId
       );
 
       return h
@@ -302,7 +302,7 @@ const AssessmentController: Controller = {
     try {
       const { userId } = req.params;
       const scores = await AssessmentService.getUserLatestApprovedScores(
-        parseInt(userId)
+        userId
       );
 
       return h

@@ -17,18 +17,19 @@ const authRoutes = {
         options: { auth: false },
         handler: AuthController.startLogin
       },
-      {
-        method: 'POST',
-        path: '/legacy-login',
-        options: { auth: false },
-        handler: AuthController.login
-      },
-      {
-        method: 'POST',
-        path: '/signup',
-        options: { auth: false },
-        handler: AuthController.signup
-      }
+      // Legacy authentication routes - commented out for OAuth-only setup
+      // {
+      //   method: 'POST',
+      //   path: '/legacy-login',
+      //   options: { auth: false },
+      //   handler: AuthController.login
+      // },
+      // {
+      //   method: 'POST',
+      //   path: '/signup',
+      //   options: { auth: false },
+      //   handler: AuthController.signup
+      // }
     ]);
   },
 };

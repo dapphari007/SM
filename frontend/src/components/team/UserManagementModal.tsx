@@ -7,45 +7,9 @@ import {
   teamService,
 } from "@/services/api";
 import { Loader2, ChevronDown, X } from "lucide-react";
+import {UserManagementModalProps ,InnerDetails,User,UserFormData} from "../../types/teamTypes";
 
-interface UserFormData {
-  id?: number;
-  userId: string;
-  name: string;
-  email: string;
-  roleId: number;
-  positionId: number;
-  teamId: number;
-  leadId?: number | undefined;
-  hrId?: number | undefined;
-}
 
-interface User {
-  createdAt: string;
-  email: string;
-  id?: number;
-  name: string;
-  Team?: { id: number; name: string };
-  position?: { id: number; name: string };
-  role?: { id: number; name: string };
-  leadId?: number | undefined;
-  hrId?: number | undefined;
-  positionId: number;
-  roleId: number;
-  teamId: number;
-  userId: string;
-}
-
-interface InnerDetails { id: number; name: string }
-
-interface UserManagementModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  editUser?: any;
-  mode: "add" | "edit";
-}
 
 const UserManagementModal = ({
   isOpen,

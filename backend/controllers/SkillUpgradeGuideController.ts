@@ -1,8 +1,7 @@
 import SkillUpgradeGuideService from '../services/SkillUpgradeGuideService';
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller } from '../types/hapi';
-import {GuideData} from "../types/controller";
-
+import { GuideData } from '../types/controller';
 
 const SkillUpgradeGuideController: Controller = {
   getGuide: async (req: Request, h: ResponseToolkit) => {

@@ -1,64 +1,19 @@
 import { EntitySchema } from "typeorm";
+import { UserType } from "../types/entities";
 
-export const role = {
-  EMPLOYEE: "employee",
-  LEAD: "lead",
-  HR: "hr",
-} as const;
-
-export type RoleType = typeof role[keyof typeof role];
-
-export const position = {
-  FRONTEND: "frontend",
-  BACKEND: "backend",
-  TESTING: "testing",
-  HR: "hr",
-} as const;
-
-export type PositionType = typeof position[keyof typeof position];
-
-export const teamName = {
-  INFORIVER: "inforiver",
-  INFOBRIDGE: "infobridge",
-  VALQ: "valq",
-} as const;
-
-export type TeamNameType = typeof teamName[keyof typeof teamName];
-
-export interface UserEntity {
-  id: number;
-  userId: string;
-  name: string;
-  email: string;
-  roleId?: number;
-  teamId?: number;
-  positionId?: number;
-  leadId?: number;
-  hrId?: number;
-  profilePhoto?: string;
-  createdAt: Date;
-  
-  // Relations
-  Requests?: any;
-  auth?: any;
-  role?: any;
-  position?: any;
-  Team?: any;
-  Audit?: any;
-}
-
-export const User = new EntitySchema<UserEntity>({
+export const User = new EntitySchema<UserType>({
   name: "User",
   tableName: "users",
   columns: {
     id: {
       primary: true,
-      type: "int",
-      generated: true,
+      type: "varchar",
+      unique: true,
     },
     userId: {
       type: "varchar",
       unique: true,
+      nullable: false,
     },
     name: {
       type: "varchar",
@@ -121,11 +76,6 @@ export const User = new EntitySchema<UserEntity>({
     Requests: {
       target: "AssessmentRequest",
       type: "one-to-many",
-      inverseSide: "User",
-    },
-    auth: {
-      target: "Auth",
-      type: "one-to-one",
       inverseSide: "User",
     },
     role: {

@@ -154,36 +154,36 @@ export default [
     "hrId": 1
   },
   {
-    "id":15,
-    "userId": "LMT20090",
-    "name": "Sindhuja",
-    "email": "sindhujas@lumel.com",
-    "roleId": 1,
-    "positionId": 2,
-    "teamId": 1,
-    "leadId": 5,
-    "hrId": 1
+    "id": 15,
+    "userId": "LMT20507",
+    "name": "HARISH K",
+    "email": "harishk@lumel.com",
+    "roleId": 3,
+    "positionId": 4,
+    "teamId": null,
+    "leadId": null,
+    "hrId": null
   },
   {
-    "id":16,
-    "userId": "LMT20087",
-    "name": "Harish",
-    "email": "harish@lumel.com",
-    "roleId": 1,
-    "positionId": 2,
-    "teamId": 1,
-    "leadId": 5,
-    "hrId": 1
+    "id": 16,
+    "userId": "LMT20508",
+    "name": "Sakthikumar Anbazhagan",
+    "email": "SakthikumarA@lumel.com",
+    "roleId": 3,
+    "positionId": 4,
+    "teamId": null,
+    "leadId": null,
+    "hrId": null
   },
   {
-    "id":17,
-    "userId": "LMT20088",
-    "name": "Sakthi Kumar",
-    "email": "sakthikumar@lumel.com",
-    "roleId": 1,
-    "positionId": 2,
-    "teamId": 1,
-    "leadId": 5,
-    "hrId": 1
+    "id": 17,
+    "userId": "LMT20509",
+    "name": "Sindhuja Sanmugam",
+    "email": "SindhujaS@lumel.com",
+    "roleId": 3,
+    "positionId": 4,
+    "teamId": null,
+    "leadId": null,
+    "hrId": null
   }
 ]

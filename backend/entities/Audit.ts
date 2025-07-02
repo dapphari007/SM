@@ -1,19 +1,7 @@
 import { EntitySchema } from "typeorm";
+import { AuditType } from '../types/entities';
 
-export interface AuditEntity {
-  id: number;
-  assessmentId: number;
-  auditType?: string;
-  editorId: number;
-  auditedAt: Date;
-  comments?: string;
-  
-  // Relations
-  User?: any;
-  assessmentRequest?: any;
-}
-
-export const Audit = new EntitySchema<AuditEntity>({
+export const Audit = new EntitySchema<AuditType>({
   name: "Audit",
   tableName: "audit",
   columns: {

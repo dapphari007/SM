@@ -1,23 +1,7 @@
 import { EntitySchema } from "typeorm";
+import { PositionType } from "../types/entities";
 
-export const position = {
-  FRONTEND: 'frontend',
-  BACKEND: 'backend',
-  TESTING: 'testing',
-  HR: 'hr'
-} as const;
-
-export type PositionType = typeof position[keyof typeof position];
-
-export interface PositionEntity {
-  id: number;
-  name: string;
-  
-  // Relations
-  user?: any;
-}
-
-export const Position = new EntitySchema<PositionEntity>({
+export const Position = new EntitySchema<PositionType>({
   name: "Position",
   tableName: "positions",
   columns: {

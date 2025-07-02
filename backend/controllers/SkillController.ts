@@ -2,8 +2,7 @@ import SkillService from "../services/SkillService";
 import UserService from "../services/UserService";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
-import {SkillData} from "../types/controller";
-
+import { SkillData } from "../types/controller";
 
 const SkillController: Controller = {
   createSkill: async (req: AuthRequest, h: ResponseToolkit) => {

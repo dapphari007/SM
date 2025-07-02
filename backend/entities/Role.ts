@@ -1,22 +1,7 @@
 import { EntitySchema } from "typeorm";
+import { RoleType } from "../types/entities";
 
-export const role = {
-  EMPLOYEE: 'employee',
-  LEAD: 'lead',
-  HR: 'hr'
-} as const;
-
-export type RoleType = typeof role[keyof typeof role];
-
-export interface RoleEntity {
-  id: number;
-  name: string;
-  
-  // Relations
-  user?: any;
-}
-
-export const Role = new EntitySchema<RoleEntity>({
+export const Role = new EntitySchema<RoleType>({
   name: "Role",
   tableName: "roles",
   columns: {

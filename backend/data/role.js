@@ -1,4 +1,4 @@
-import { role } from "../entities/User";
+import { role } from "../enum/enum";
 
 export default [
     {
