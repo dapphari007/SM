@@ -2,25 +2,7 @@ import AssessmentService from "../services/AssessmentService";
 import Boom from "@hapi/boom";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
-
-interface SkillAssessment {
-  skillId: number;
-  selfScore: number;
-}
-
-interface AssessmentPayload {
-  userId: string;
-  comments?: string;
-  skillAssessments: SkillAssessment[];
-  [key: string]: any;
-}
-
-interface ReviewData {
-  leadScore?: number;
-  status?: string;
-  comments?: string;
-  [key: string]: any;
-}
+import {SkillAssessment,AssessmentPayload,ReviewData} from "../types/controller";
 
 const AssessmentController: Controller = {
   // Create a new assessment

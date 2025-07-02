@@ -1,19 +1,8 @@
 import UserService from "../services/UserService";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
+import {UserData} from "../types/controller";
 
-interface UserData {
-  userId?: string;
-  name?: string;
-  email?: string;
-  roleId?: number;
-  teamId?: number;
-  positionId?: number;
-  leadId?: number;
-  hrId?: number;
-  profilePhoto?: string;
-  [key: string]: any;
-}
 
 const UserController: Controller = {
   getUserById: async (req: AuthRequest, h: ResponseToolkit) => {

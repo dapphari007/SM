@@ -9,7 +9,9 @@
     "dev:js": "nodemon index.js",
     "build": "tsc",
     "start": "node dist/index.js",
-    "start:ts": "node scripts/start-ts.js"
+    "start:ts": "node scripts/start-ts.js",
+    "seed":"ts-node seeder.ts",
+    "reset":"ts-node resetDB.ts"
   },
   "keywords": [],
   "author": "",
@@ -25,9 +27,11 @@
     "bell": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
+    "hapi": "^18.1.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.16.0",
-    "typeorm": "^0.3.24"
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.25"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

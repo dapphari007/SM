@@ -40,29 +40,10 @@ import { AppDataSource } from "../config/dataSource";
 import { role, User } from "../entities/User";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
+import {SkillScore,RequestPayload,ReviewHistoryItem} from "../types/controller";
+
 
 const userRepo = AppDataSource.getRepository(User);
-
-interface SkillScore {
-  skillId: number;
-  score: number;
-}
-
-interface RequestPayload {
-  userId?: string;
-  editedSkillScore?: SkillScore[];
-  skillScore: SkillScore[];
-  comments?: string;
-  status?: string;
-}
-
-interface ReviewHistoryItem {
-  createrRole: string;
-  createdBy: string;
-  createdAt: Date;
-  comments?: string;
-}
-
 const SkillUpdateRequestController: Controller = {
   createRequest: async (req: AuthRequest, h: ResponseToolkit) => {
     try {

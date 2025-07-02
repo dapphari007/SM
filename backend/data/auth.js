@@ -54,5 +54,5 @@ export default [
   {
     "id":14,
     "email": "srinidhi@lumel.com",
-  }
+  },
 ]

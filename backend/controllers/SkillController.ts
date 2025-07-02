@@ -2,18 +2,8 @@ import SkillService from "../services/SkillService";
 import UserService from "../services/UserService";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
+import {SkillData} from "../types/controller";
 
-interface SkillData {
-  id?: number;
-  name: string;
-  low?: string;
-  medium?: string;
-  average?: string;
-  high?: string;
-  createdBy?: string;
-  position?: number[];
-  [key: string]: any;
-}
 
 const SkillController: Controller = {
   createSkill: async (req: AuthRequest, h: ResponseToolkit) => {
