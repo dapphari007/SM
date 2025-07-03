@@ -375,7 +375,131 @@ const assessmentRoutes = {
           description: 'Get upcoming assessments in next 7 days',
           tags: ['api', 'assessment', 'upcoming'],
         }
-      }
+      },
+
+      // ===== NEW TEAM-BASED BULK ASSESSMENT ROUTES =====
+      
+      // HR initiates bulk assessment
+      {
+        method: "POST",
+        path: "/bulk-assessment",
+        handler: AssessmentController.initiateBulkAssessment,
+        options: {
+          auth: 'jwt',
+          description: 'HR initiates bulk assessment for all users or specific teams',
+          tags: ['api', 'assessment', 'hr', 'bulk'],
+        }
+      },
+      
+      // Get assessment cycles (HR only)
+      {
+        method: "GET",
+        path: "/cycles",
+        handler: AssessmentController.getAssessmentCycles,
+        options: {
+          auth: 'jwt',
+          description: 'Get all assessment cycles for HR',
+          tags: ['api', 'assessment', 'hr', 'cycles'],
+        }
+      },
+      
+      // Get specific assessment cycle details (HR only)
+      {
+        method: "GET",
+        path: "/cycles/{cycleId}",
+        handler: AssessmentController.getAssessmentCycleDetails,
+        options: {
+          auth: 'jwt',
+          description: 'Get specific assessment cycle details',
+          tags: ['api', 'assessment', 'hr', 'cycles'],
+        }
+      },
+      
+      // Cancel assessment cycle (HR only)
+      {
+        method: "POST",
+        path: "/cycles/{cycleId}/cancel",
+        handler: AssessmentController.cancelAssessmentCycle,
+        options: {
+          auth: 'jwt',
+          description: 'Cancel assessment cycle and all associated assessments',
+          tags: ['api', 'assessment', 'hr', 'cycles'],
+        }
+      },
+      
+      // Get team assessments (Team Lead only)
+      {
+        method: "GET",
+        path: "/team/assessments",
+        handler: AssessmentController.getTeamAssessments,
+        options: {
+          auth: 'jwt',
+          description: 'Get all assessments for team members (Team Lead only)',
+          tags: ['api', 'assessment', 'lead', 'team'],
+        }
+      },
+      
+      // Get team members (Team Lead only)
+      {
+        method: "GET",
+        path: "/team/members",
+        handler: AssessmentController.getTeamMembers,
+        options: {
+          auth: 'jwt',
+          description: 'Get all team members (Team Lead only)',
+          tags: ['api', 'assessment', 'lead', 'team'],
+        }
+      },
+      
+      // Get team assessment statistics (Team Lead only)
+      {
+        method: "GET",
+        path: "/team/statistics",
+        handler: AssessmentController.getTeamAssessmentStatistics,
+        options: {
+          auth: 'jwt',
+          description: 'Get team assessment statistics (Team Lead only)',
+          tags: ['api', 'assessment', 'lead', 'team', 'statistics'],
+        }
+      },
+      
+      // Get pending team assessments (Team Lead only)
+      {
+        method: "GET",
+        path: "/team/pending",
+        handler: AssessmentController.getPendingTeamAssessments,
+        options: {
+          auth: 'jwt',
+          description: 'Get pending team assessments (Team Lead only)',
+          tags: ['api', 'assessment', 'lead', 'team'],
+        }
+      },
+      
+      // Get team member assessment (Team Lead only)
+      {
+        method: "GET",
+        path: "/team/member/{userId}",
+        handler: AssessmentController.getTeamMemberAssessment,
+        options: {
+          auth: 'jwt',
+          description: 'Get assessments for specific team member (Team Lead only)',
+          tags: ['api', 'assessment', 'lead', 'team'],
+        }
+      },
+      
+      // Get team summary (HR only)
+      {
+        method: "GET",
+        path: "/team/{teamId}/summary",
+        handler: AssessmentController.getTeamSummary,
+        options: {
+          auth: 'jwt',
+          description: 'Get team summary for HR dashboard',
+          tags: ['api', 'assessment', 'hr', 'team'],
+        }
+      },
+      
+      // ===== END NEW TEAM-BASED BULK ASSESSMENT ROUTES =====
     ]);
   },
 };

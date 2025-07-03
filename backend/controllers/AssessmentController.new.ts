@@ -745,6 +745,409 @@ const AssessmentController: Controller = {
       })
       .code(400);
   },
+
+  // ===== NEW TEAM-BASED BULK ASSESSMENT METHODS =====
+
+  // HR initiates bulk assessment for all users or specific teams
+  initiateBulkAssessment: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const { skillIds, assessmentTitle, includeTeams, scheduledDate, comments, excludeUsers } = req.payload as {
+        skillIds: number[];
+        assessmentTitle: string;
+        includeTeams: string[];
+        scheduledDate?: string;
+        comments?: string;
+        excludeUsers?: string[];
+      };
+      
+      const hrId = req.auth.credentials.user.id;
+      
+      const result = await AssessmentService.initiateBulkAssessment(
+        hrId,
+        skillIds,
+        assessmentTitle,
+        includeTeams,
+        scheduledDate ? new Date(scheduledDate) : undefined,
+        comments || "",
+        excludeUsers || []
+      );
+
+      return h
+        .response({
+          success: true,
+          message: "Bulk assessment initiated successfully",
+          data: result,
+        })
+        .code(201);
+    } catch (error: any) {
+      console.error("Error initiating bulk assessment:", error);
+      
+      if (error.message.includes("Only HR can initiate")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(403);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get assessment cycles (for HR)
+  getAssessmentCycles: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const cycles = await AssessmentService.getAssessmentCycles();
+
+      return h
+        .response({
+          success: true,
+          message: "Assessment cycles retrieved successfully",
+          data: cycles,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting assessment cycles:", error);
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get specific assessment cycle details
+  getAssessmentCycleDetails: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const { cycleId } = req.params;
+      
+      const parsedId = parseInt(cycleId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Cycle ID must be a valid number",
+          })
+          .code(400);
+      }
+      
+      const cycle = await AssessmentService.getAssessmentCycleDetails(parsedId);
+
+      return h
+        .response({
+          success: true,
+          message: "Assessment cycle details retrieved successfully",
+          data: cycle,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting assessment cycle details:", error);
+      
+      if (error.message.includes("not found")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(404);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Cancel assessment cycle (for HR)
+  cancelAssessmentCycle: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const { cycleId } = req.params;
+      const { comments } = req.payload as { comments?: string };
+      
+      const parsedId = parseInt(cycleId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Cycle ID must be a valid number",
+          })
+          .code(400);
+      }
+      
+      const hrId = req.auth.credentials.user.id;
+      
+      const result = await AssessmentService.cancelAssessmentCycle(hrId, parsedId, comments);
+
+      return h
+        .response({
+          success: true,
+          message: "Assessment cycle cancelled successfully",
+          data: result,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error cancelling assessment cycle:", error);
+      
+      if (error.message.includes("not found")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(404);
+      }
+      
+      if (error.message.includes("already cancelled") || error.message.includes("Cannot cancel")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(409);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get team assessments (for Team Lead)
+  getTeamAssessments: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const leadId = req.auth.credentials.user.id;
+      
+      const assessments = await AssessmentService.getTeamAssessments(leadId);
+
+      return h
+        .response({
+          success: true,
+          message: "Team assessments retrieved successfully",
+          data: assessments,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting team assessments:", error);
+      
+      if (error.message.includes("not authorized") || error.message.includes("not a team lead")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(403);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get team members (for Team Lead)
+  getTeamMembers: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const leadId = req.auth.credentials.user.id;
+      
+      const members = await AssessmentService.getTeamMembers(leadId);
+
+      return h
+        .response({
+          success: true,
+          message: "Team members retrieved successfully",
+          data: members,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting team members:", error);
+      
+      if (error.message.includes("not authorized") || error.message.includes("not a team lead")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(403);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get team assessment statistics (for Team Lead)
+  getTeamAssessmentStatistics: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const leadId = req.auth.credentials.user.id;
+      
+      const statistics = await AssessmentService.getTeamAssessmentStatistics(leadId);
+
+      return h
+        .response({
+          success: true,
+          message: "Team assessment statistics retrieved successfully",
+          data: statistics,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting team assessment statistics:", error);
+      
+      if (error.message.includes("not authorized") || error.message.includes("not a team lead")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(403);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get pending team assessments (for Team Lead)
+  getPendingTeamAssessments: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const leadId = req.auth.credentials.user.id;
+      
+      const assessments = await AssessmentService.getPendingTeamAssessments(leadId);
+
+      return h
+        .response({
+          success: true,
+          message: "Pending team assessments retrieved successfully",
+          data: assessments,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting pending team assessments:", error);
+      
+      if (error.message.includes("not authorized") || error.message.includes("not a team lead")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(403);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get team member assessment (for Team Lead)
+  getTeamMemberAssessment: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const { userId } = req.params;
+      const leadId = req.auth.credentials.user.id;
+      
+      const assessment = await AssessmentService.getTeamMemberAssessment(leadId, userId);
+
+      return h
+        .response({
+          success: true,
+          message: "Team member assessment retrieved successfully",
+          data: assessment,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting team member assessment:", error);
+      
+      if (error.message.includes("not authorized") || error.message.includes("not found")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(error.message.includes("not found") ? 404 : 403);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get team summary (for HR)
+  getTeamSummary: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const { teamId } = req.params;
+      
+      const parsedId = parseInt(teamId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Team ID must be a valid number",
+          })
+          .code(400);
+      }
+      
+      const summary = await AssessmentService.getTeamSummary(parsedId);
+
+      return h
+        .response({
+          success: true,
+          message: "Team summary retrieved successfully",
+          data: summary,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting team summary:", error);
+      
+      if (error.message.includes("not found")) {
+        return h
+          .response({
+            success: false,
+            error: error.message,
+          })
+          .code(404);
+      }
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // ===== END NEW TEAM-BASED BULK ASSESSMENT METHODS =====
 };
 
 export default AssessmentController;

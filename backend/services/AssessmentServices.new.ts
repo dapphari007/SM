@@ -9,8 +9,14 @@ import {
   LatestScore
 } from "../types/services";
 import { AssessmentRequestType, ScoreType, UserType, SkillType, AuditType } from "../types/entities";
+import { AssessmentCycleType } from "../entities/AssessmentCycle.new";
+import { AssessmentCycleSkillType } from "../entities/AssessmentCycleSkill.new";
 import { AssessmentStatus,  role } from "../enum/enum";
 import * as cron from 'node-cron';
+
+// Additional repository setup for new entities
+const assessmentCycleRepo = AppDataSource.getRepository("AssessmentCycle");
+const assessmentCycleSkillRepo = AppDataSource.getRepository("AssessmentCycleSkill");
 
 interface AssessmentWithHistory extends Omit<AssessmentRequestType, 'Score'> {
   detailedScores: ScoreType[];
@@ -30,6 +36,24 @@ interface AssessmentCycle {
   employeeComments?: string;
   hrFinalDecision?: 'APPROVED' | 'REJECTED';
   hrComments?: string;
+  createdAt: Date;
+}
+
+interface BulkAssessmentRequest {
+  skillIds: number[];
+  scheduledDate?: Date;
+  comments: string;
+  assessmentTitle: string;
+  includeTeams: string[];
+  excludeUsers: string[];
+}
+
+interface BulkAssessmentResult {
+  assessmentCycleId: number;
+  title: string;
+  totalAssessments: number;
+  targetUsers: number;
+  skills: number[];
   createdAt: Date;
 }
 
@@ -554,6 +578,598 @@ const AssessmentService = {
         console.error('Error in assessment cron job:', error);
       }
     });
+  },
+
+  // ===== NEW TEAM-BASED BULK ASSESSMENT METHODS =====
+
+  // HR initiates bulk assessment for all users or specific teams
+  initiateBulkAssessment: async (
+    hrId: string,
+    skillIds: number[],
+    assessmentTitle: string,
+    includeTeams: string[],
+    scheduledDate?: Date,
+    comments: string = "",
+    excludeUsers: string[] = []
+  ): Promise<BulkAssessmentResult> => {
+    try {
+      // Validate HR user
+      const hrUser = await userRepo.findOne({ 
+        where: { id: hrId },
+        relations: ["role"]
+      });
+      if (!hrUser || hrUser.role?.name !== role.HR) {
+        throw new Error("Only HR can initiate bulk assessments");
+      }
+
+      // Validate skills exist
+      const validSkills = await skillRepo.findBy({ id: In(skillIds) });
+      if (validSkills.length !== skillIds.length) {
+        throw new Error("One or more skills not found");
+      }
+
+      // Create assessment cycle
+      const assessmentCycle = assessmentCycleRepo.create({
+        title: assessmentTitle,
+        createdBy: hrId,
+        scheduledDate: scheduledDate || new Date(),
+        status: 'ACTIVE',
+        comments: comments,
+        targetTeams: includeTeams.includes('all') ? ['all'] : includeTeams.map(String),
+        excludedUsers: excludeUsers,
+        totalAssessments: 0,
+        completedAssessments: 0
+      });
+
+      const savedCycle = await assessmentCycleRepo.save(assessmentCycle);
+
+      // Get target users based on team selection
+      let targetUsers: UserType[] = [];
+      
+      if (includeTeams.includes('all')) {
+        // Get all employees and team leads
+        targetUsers = await userRepo.find({
+          where: {
+            role: { name: In([role.EMPLOYEE, role.LEAD]) }
+          },
+          relations: ["role", "team"]
+        });
+      } else {
+        // Get users from specific teams
+        const teamIds = includeTeams.filter(id => id !== 'all').map(Number);
+        targetUsers = await userRepo.find({
+          where: {
+            teamId: In(teamIds),
+            role: { name: In([role.EMPLOYEE, role.LEAD]) }
+          },
+          relations: ["role", "team"]
+        });
+      }
+
+      // Exclude specified users
+      if (excludeUsers.length > 0) {
+        targetUsers = targetUsers.filter(user => !excludeUsers.includes(user.id));
+      }
+
+      // Check for existing active assessments and exclude those users
+      const existingAssessments = await assessmentRequestRepo.find({
+        where: {
+          userId: In(targetUsers.map(u => u.id)),
+          status: In([
+            AssessmentStatus.INITIATED,
+            AssessmentStatus.LEAD_WRITING,
+            AssessmentStatus.EMPLOYEE_REVIEW,
+            AssessmentStatus.EMPLOYEE_APPROVED,
+            AssessmentStatus.EMPLOYEE_REJECTED,
+            AssessmentStatus.HR_FINAL_REVIEW
+          ]),
+        },
+      });
+
+      const usersWithActiveAssessments = existingAssessments.map(a => a.userId);
+      const eligibleUsers = targetUsers.filter(user => !usersWithActiveAssessments.includes(user.id));
+
+      // Create individual assessments for each eligible user
+      const assessments = [];
+      for (const user of eligibleUsers) {
+        const assessment = assessmentRequestRepo.create({
+          userId: user.id,
+          status: AssessmentStatus.INITIATED,
+          initiatedBy: hrId,
+          nextApprover: user.leadId ? parseInt(user.leadId) : null,
+          scheduledDate: scheduledDate || new Date(),
+          currentCycle: 1,
+          nextScheduledDate: scheduledDate ? new Date(scheduledDate.getTime() + (90 * 24 * 60 * 60 * 1000)) : null,
+          requestedAt: new Date()
+        });
+
+        const savedAssessment = await assessmentRequestRepo.save(assessment);
+        assessments.push(savedAssessment);
+
+        // Create audit entry
+        const auditEntry = AuditRepo.create({
+          assessmentId: Array.isArray(savedAssessment) ? savedAssessment[0].id : savedAssessment.id,
+          auditType: 'ASSESSMENT_INITIATED',
+          editorId: parseInt(hrId),
+          comments: `Assessment initiated as part of cycle: ${assessmentTitle}`,
+          auditedAt: new Date(),
+          createdAt: new Date()
+        });
+        await AuditRepo.save(auditEntry);
+      }
+
+      // Link skills to cycle
+      for (const skillId of skillIds) {
+        const cycleSkill = assessmentCycleSkillRepo.create({
+          cycleId: savedCycle.id,
+          skillId: skillId
+        });
+        await assessmentCycleSkillRepo.save(cycleSkill);
+      }
+
+      // Update cycle with assessment count
+      savedCycle.totalAssessments = assessments.length;
+      await assessmentCycleRepo.save(savedCycle);
+
+      return {
+        assessmentCycleId: savedCycle.id,
+        title: savedCycle.title,
+        totalAssessments: assessments.length,
+        targetUsers: eligibleUsers.length,
+        skills: skillIds,
+        createdAt: savedCycle.createdAt
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to initiate bulk assessment: ${error.message}`);
+    }
+  },
+
+  // Get team assessments (for Team Lead) - only their team members
+  getTeamAssessments: async (leadId: string): Promise<AssessmentWithHistory[]> => {
+    try {
+      // Validate team lead
+      const leadUser = await userRepo.findOne({ 
+        where: { id: leadId },
+        relations: ["role"]
+      });
+      if (!leadUser || leadUser.role?.name !== role.LEAD) {
+        throw new Error("Only team leads can access team assessments");
+      }
+
+      // Get team members under this lead
+      const teamMembers = await userRepo.find({
+        where: { leadId: leadId },
+        relations: ["role"]
+      });
+
+      if (teamMembers.length === 0) {
+        return [];
+      }
+
+      const teamMemberIds = teamMembers.map(member => member.id);
+
+      // Get assessments for team members only
+      const assessments = await assessmentRequestRepo.find({
+        where: {
+          userId: In(teamMemberIds)
+        },
+        relations: ["user", "user.role"],
+        order: { requestedAt: "DESC" }
+      });
+
+      // Get detailed scores and history for each assessment
+      const assessmentsWithHistory = [];
+      for (const assessment of assessments) {
+        const scores = await scoreRepo.find({
+          where: { assessmentId: assessment.id },
+          relations: ["Skill"]
+        });
+
+        const history = await AuditRepo.find({
+          where: { assessmentId: assessment.id },
+          order: { createdAt: "ASC" }
+        });
+
+        assessmentsWithHistory.push({
+          ...assessment,
+          detailedScores: scores,
+          history: history,
+          currentCycle: assessment.currentCycle,
+          isAccessible: true
+        });
+      }
+
+      return assessmentsWithHistory;
+    } catch (error: any) {
+      throw new Error(`Failed to get team assessments: ${error.message}`);
+    }
+  },
+
+  // Get team members (for Team Lead)
+  getTeamMembers: async (leadId: string): Promise<UserType[]> => {
+    try {
+      // Validate team lead
+      const leadUser = await userRepo.findOne({ 
+        where: { id: leadId },
+        relations: ["role"]
+      });
+      if (!leadUser || leadUser.role?.name !== role.LEAD) {
+        throw new Error("Only team leads can access team member data");
+      }
+
+      const teamMembers = await userRepo.find({
+        where: { leadId: leadId },
+        relations: ["role", "team", "position"],
+        order: { name: "ASC" }
+      });
+
+      return teamMembers;
+    } catch (error: any) {
+      throw new Error(`Failed to get team members: ${error.message}`);
+    }
+  },
+
+  // Get assessment cycles (for HR)
+  getAssessmentCycles: async (): Promise<AssessmentCycleType[]> => {
+    try {
+      const cycles = await assessmentCycleRepo.find({
+        relations: ["assessments"],
+        order: { createdAt: "DESC" }
+      }) as AssessmentCycleType[];
+
+      // Get skills for each cycle
+      for (const cycle of cycles) {
+        const cycleSkills = await assessmentCycleSkillRepo.find({
+          where: { cycleId: cycle.id },
+          relations: ["skill"]
+        });
+        cycle.skills = cycleSkills.map(cs => cs.skill);
+      }
+
+      return cycles;
+    } catch (error: any) {
+      throw new Error(`Failed to get assessment cycles: ${error.message}`);
+    }
+  },
+
+  // Get specific assessment cycle details
+  getAssessmentCycleDetails: async (cycleId: number): Promise<AssessmentCycleType> => {
+    try {
+      const cycle = await assessmentCycleRepo.findOne({
+        where: { id: cycleId },
+        relations: ["assessments"]
+      }) as AssessmentCycleType;
+
+      if (!cycle) {
+        throw new Error("Assessment cycle not found");
+      }
+
+      // Get skills for this cycle
+      const cycleSkills = await assessmentCycleSkillRepo.find({
+        where: { cycleId: cycle.id },
+        relations: ["skill"]
+      });
+      cycle.skills = cycleSkills.map(cs => cs.skill);
+
+      return cycle;
+    } catch (error: any) {
+      throw new Error(`Failed to get assessment cycle details: ${error.message}`);
+    }
+  },
+
+  // Get team assessment statistics (for Team Lead)
+  getTeamAssessmentStatistics: async (leadId: string): Promise<any> => {
+    try {
+      // Validate team lead
+      const leadUser = await userRepo.findOne({ 
+        where: { id: leadId },
+        relations: ["role"]
+      });
+      if (!leadUser || leadUser.role?.name !== role.LEAD) {
+        throw new Error("Only team leads can access team statistics");
+      }
+
+      // Get team members
+      const teamMembers = await userRepo.find({
+        where: { leadId: leadId },
+        relations: ["role"]
+      });
+
+      if (teamMembers.length === 0) {
+        return {
+          totalTeamMembers: 0,
+          assessments: { total: 0, byStatus: {} },
+          averageScores: {},
+          recentActivity: []
+        };
+      }
+
+      const teamMemberIds = teamMembers.map(member => member.id);
+
+      // Get assessments for team
+      const teamAssessments = await assessmentRequestRepo.find({
+        where: { userId: In(teamMemberIds) },
+        relations: ["user"]
+      });
+
+      // Calculate statistics
+      const statistics = {
+        totalTeamMembers: teamMembers.length,
+        assessments: {
+          total: teamAssessments.length,
+          byStatus: {
+            initiated: teamAssessments.filter(a => a.status === AssessmentStatus.INITIATED).length,
+            leadWriting: teamAssessments.filter(a => a.status === AssessmentStatus.LEAD_WRITING).length,
+            employeeReview: teamAssessments.filter(a => a.status === AssessmentStatus.EMPLOYEE_REVIEW).length,
+            completed: teamAssessments.filter(a => a.status === AssessmentStatus.COMPLETED).length,
+          }
+        },
+        pendingActions: teamAssessments.filter(a => 
+          a.status === AssessmentStatus.INITIATED || 
+          a.status === AssessmentStatus.LEAD_WRITING
+        ).length,
+        recentAssessments: teamAssessments
+          .filter(a => {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            return a.requestedAt >= thirtyDaysAgo;
+          })
+          .length
+      };
+
+      return statistics;
+    } catch (error: any) {
+      throw new Error(`Failed to get team statistics: ${error.message}`);
+    }
+  },
+
+  // Get pending team assessments (for Team Lead)
+  getPendingTeamAssessments: async (leadId: string): Promise<AssessmentWithHistory[]> => {
+    try {
+      // Validate team lead
+      const leadUser = await userRepo.findOne({ 
+        where: { id: leadId },
+        relations: ["role"]
+      });
+      if (!leadUser || leadUser.role?.name !== role.LEAD) {
+        throw new Error("Only team leads can access pending team assessments");
+      }
+
+      // Get team members
+      const teamMembers = await userRepo.find({
+        where: { leadId: leadId }
+      });
+
+      if (teamMembers.length === 0) {
+        return [];
+      }
+
+      const teamMemberIds = teamMembers.map(member => member.id);
+
+      // Get pending assessments for team
+      const pendingAssessments = await assessmentRequestRepo.find({
+        where: {
+          userId: In(teamMemberIds),
+          status: In([
+            AssessmentStatus.INITIATED,
+            AssessmentStatus.LEAD_WRITING,
+            AssessmentStatus.EMPLOYEE_REVIEW
+          ])
+        },
+        relations: ["user", "user.role"],
+        order: { scheduledDate: "ASC" }
+      });
+
+      // Add detailed scores and history
+      const assessmentsWithHistory = [];
+      for (const assessment of pendingAssessments) {
+        const scores = await scoreRepo.find({
+          where: { assessmentId: assessment.id },
+          relations: ["Skill"]
+        });
+
+        const history = await AuditRepo.find({
+          where: { assessmentId: assessment.id },
+          order: { createdAt: "ASC" }
+        });
+
+        assessmentsWithHistory.push({
+          ...assessment,
+          detailedScores: scores,
+          history: history,
+          currentCycle: assessment.currentCycle,
+          isAccessible: true
+        });
+      }
+
+      return assessmentsWithHistory;
+    } catch (error: any) {
+      throw new Error(`Failed to get pending team assessments: ${error.message}`);
+    }
+  },
+
+  // Get assessment for specific team member (with team validation)
+  getTeamMemberAssessment: async (leadId: string, targetUserId: string): Promise<AssessmentWithHistory[]> => {
+    try {
+      // Validate team lead
+      const leadUser = await userRepo.findOne({ 
+        where: { id: leadId },
+        relations: ["role"]
+      });
+      if (!leadUser || leadUser.role?.name !== role.LEAD) {
+        throw new Error("Only team leads can access team member assessments");
+      }
+
+      // Validate that target user is in the team
+      const targetUser = await userRepo.findOne({
+        where: { id: targetUserId, leadId: leadId },
+        relations: ["role"]
+      });
+
+      if (!targetUser) {
+        throw new Error("User not found in your team or access denied");
+      }
+
+      // Get assessments for this team member
+      const assessments = await assessmentRequestRepo.find({
+        where: { userId: targetUserId },
+        relations: ["user", "user.role"],
+        order: { requestedAt: "DESC" }
+      });
+
+      // Add detailed scores and history
+      const assessmentsWithHistory = [];
+      for (const assessment of assessments) {
+        const scores = await scoreRepo.find({
+          where: { assessmentId: assessment.id },
+          relations: ["Skill"]
+        });
+
+        const history = await AuditRepo.find({
+          where: { assessmentId: assessment.id },
+          order: { createdAt: "ASC" }
+        });
+
+        assessmentsWithHistory.push({
+          ...assessment,
+          detailedScores: scores,
+          history: history,
+          currentCycle: assessment.currentCycle,
+          isAccessible: true
+        });
+      }
+
+      return assessmentsWithHistory;
+    } catch (error: any) {
+      throw new Error(`Failed to get team member assessment: ${error.message}`);
+    }
+  },
+
+  // Cancel assessment cycle (for HR)
+  cancelAssessmentCycle: async (hrId: string, cycleId: number, comments?: string): Promise<AssessmentCycleType> => {
+    try {
+      // Validate HR user
+      const hrUser = await userRepo.findOne({ 
+        where: { id: hrId },
+        relations: ["role"]
+      });
+      if (!hrUser || hrUser.role?.name !== role.HR) {
+        throw new Error("Only HR can cancel assessment cycles");
+      }
+
+      const cycle = await assessmentCycleRepo.findOne({
+        where: { id: cycleId },
+        relations: ["assessments"]
+      });
+
+      if (!cycle) {
+        throw new Error("Assessment cycle not found");
+      }
+
+      if (cycle.status === "CANCELLED") {
+        throw new Error("Assessment cycle is already cancelled");
+      }
+
+      if (cycle.status === "COMPLETED") {
+        throw new Error("Cannot cancel completed assessment cycle");
+      }
+
+      // Cancel all active assessments in this cycle
+      const activeAssessments = await assessmentRequestRepo.find({
+        where: {
+          status: In([
+            AssessmentStatus.INITIATED,
+            AssessmentStatus.LEAD_WRITING,
+            AssessmentStatus.EMPLOYEE_REVIEW,
+            AssessmentStatus.EMPLOYEE_APPROVED,
+            AssessmentStatus.EMPLOYEE_REJECTED,
+            AssessmentStatus.HR_FINAL_REVIEW
+          ])
+        }
+      });
+
+      for (const assessment of activeAssessments) {
+        assessment.status = AssessmentStatus.Cancelled;
+        // Note: comments property doesn't exist in AssessmentRequestType, so we'll add it to audit instead
+        await assessmentRequestRepo.save(assessment);
+
+        // Create audit entry
+        const auditEntry = AuditRepo.create({
+          assessmentId: assessment.id,
+          auditType: 'ASSESSMENT_CANCELLED',
+          editorId: parseInt(hrId),
+          comments: `Assessment cancelled as part of cycle cancellation: ${comments || 'No reason provided'}`,
+          auditedAt: new Date(),
+          createdAt: new Date()
+        });
+        await AuditRepo.save(auditEntry);
+      }
+
+      // Update cycle status
+      cycle.status = "CANCELLED";
+      cycle.comments = `${cycle.comments || ''}\n\nCancelled by HR: ${comments || 'No reason provided'}`;
+      const savedCycle = await assessmentCycleRepo.save(cycle) as AssessmentCycleType;
+
+      return savedCycle;
+    } catch (error: any) {
+      throw new Error(`Failed to cancel assessment cycle: ${error.message}`);
+    }
+  },
+
+  // Get team summary for HR
+  getTeamSummary: async (teamId: number): Promise<any> => {
+    try {
+      // Get team members
+      const teamMembers = await userRepo.find({
+        where: { teamId: teamId },
+        relations: ["role", "Team"]
+      });
+
+      if (teamMembers.length === 0) {
+        return {
+          teamId: teamId,
+          teamName: "Unknown Team",
+          totalMembers: 0,
+          assessments: { total: 0, byStatus: {} },
+          recentActivity: []
+        };
+      }
+
+      const teamMemberIds = teamMembers.map(member => member.id);
+      const teamName = teamMembers[0].Team?.name || "Unknown Team";
+
+      // Get assessments for team
+      const teamAssessments = await assessmentRequestRepo.find({
+        where: { userId: In(teamMemberIds) },
+        relations: ["user"],
+        order: { requestedAt: "DESC" }
+      });
+
+      // Calculate team statistics
+      const summary = {
+        teamId: teamId,
+        teamName: teamName,
+        totalMembers: teamMembers.length,
+        assessments: {
+          total: teamAssessments.length,
+          byStatus: {
+            initiated: teamAssessments.filter(a => a.status === AssessmentStatus.INITIATED).length,
+            leadWriting: teamAssessments.filter(a => a.status === AssessmentStatus.LEAD_WRITING).length,
+            employeeReview: teamAssessments.filter(a => a.status === AssessmentStatus.EMPLOYEE_REVIEW).length,
+            completed: teamAssessments.filter(a => a.status === AssessmentStatus.COMPLETED).length,
+            cancelled: teamAssessments.filter(a => a.status === AssessmentStatus.Cancelled).length,
+          }
+        },
+        recentActivity: teamAssessments.slice(0, 10), // Last 10 assessments
+        activeAssessments: teamAssessments.filter(a => 
+          ![AssessmentStatus.COMPLETED, AssessmentStatus.Cancelled].includes(a.status)
+        ).length
+      };
+
+      return summary;
+    } catch (error: any) {
+      throw new Error(`Failed to get team summary: ${error.message}`);
+    }
   }
 };
 

@@ -152,3 +152,15 @@ export const AssessmentRequest = new EntitySchema<AssessmentRequestType>({
     },
   },
 });
+
+// Helper functions for virtual properties (to maintain compatibility)
+export const getDetailedScores = (assessment: AssessmentRequestType): any[] => {
+  return assessment.scores || [];
+};
+
+export const getHistory = (assessment: AssessmentRequestType): any[] => {
+  // This would be populated from audit logs
+  return assessment.history || [];
+};
+
+export default AssessmentRequest;
