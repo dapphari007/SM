@@ -34,7 +34,6 @@ export interface ScoreData {
   id?: number;
   assessmentId: number;
   skillId: number;
-  selfScore?: number;
   leadScore?: number;
   updatedAt?: Date;
   Skill?: any;
@@ -52,8 +51,7 @@ export interface AssessmentData {
 
 export interface SkillAssessmentData {
   skillId: number;
-  selfScore: number;
-  leadScore?: number;
+  leadScore: number;
 }
 
 export interface GuideData {

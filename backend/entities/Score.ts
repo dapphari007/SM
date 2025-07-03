@@ -14,11 +14,7 @@ export const Score = new EntitySchema<ScoreType>({
       type: "int",
       name: "assessment_id",
     },
-    selfScore: {
-      type: "int",
-      nullable: true,
-      name: "self_score",
-    },
+
     leadScore: {
       type: "int",
       nullable: true,

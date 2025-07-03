@@ -2,7 +2,7 @@
 
 export interface SkillAssessment {
   skillId: number;
-  selfScore: number;
+  leadScore: number;
 }
 
 export interface AssessmentPayload {
@@ -17,6 +17,11 @@ export interface ReviewData {
   status?: string;
   comments?: string;
   [key: string]: any;
+}
+
+export interface SkillAssessmentData {
+  skillId: number;
+  leadScore: number;
 }
 
 //controllers/authController

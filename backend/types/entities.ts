@@ -60,7 +60,6 @@ export interface SkillType {
 export interface ScoreType {
   id: number;
   assessmentId: number;
-  selfScore?: number;
   leadScore?: number;
   updatedAt: Date;
   skillId: number;
@@ -92,7 +91,9 @@ export interface AuditType {
   auditType?: string;
   editorId: number;
   auditedAt: Date;
+  createdAt: Date;
   comments?: string;
+  cycleNumber?: number;
   
   // Relations
   User?: UserType;
@@ -105,6 +106,13 @@ export interface AssessmentRequestType {
   requestedAt: Date;
   status: AssessmentStatus;
   nextApprover?: number;
+  
+  // New workflow properties
+  initiatedBy?: string;
+  scheduledDate?: Date;
+  completedAt?: Date;
+  currentCycle?: number;
+  nextScheduledDate?: Date;
   
   // Relations
   Score?: ScoreType[];
