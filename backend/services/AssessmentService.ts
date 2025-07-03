@@ -138,7 +138,8 @@ const AssessmentService = {
           leadScore: leadScore,
         });
 
-        scores.push(await scoreRepo.save(score));
+        const savedScore = await scoreRepo.save(score);
+        scores.push(savedScore);
       }
 
       return scores;

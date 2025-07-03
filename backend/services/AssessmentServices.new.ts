@@ -3,8 +3,9 @@ import { AppDataSource, assessmentRequestRepo, scoreRepo, userRepo, skillRepo, A
 import { 
   AssessmentData, 
   SkillAssessmentData, 
+  LeadSkillAssessmentData,
   ReviewData, 
-  ScoreData ,
+  ScoreData,
   LatestScore
 } from "../types/services";
 import { AssessmentRequestType, ScoreType, UserType, SkillType, AuditType } from "../types/entities";
@@ -138,7 +139,7 @@ const AssessmentService = {
   writeLeadAssessment: async (
     leadId: string,
     assessmentId: number,
-    skillScores: SkillAssessmentData[],
+    skillScores: LeadSkillAssessmentData[],
     comments: string = ""
   ): Promise<AssessmentWithHistory> => {
     try {

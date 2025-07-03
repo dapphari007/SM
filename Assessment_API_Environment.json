@@ -1,0 +1,90 @@
+{
+  "id": "assessment-api-environment",
+  "name": "Assessment API Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the API server",
+      "enabled": true
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "description": "JWT token for authentication - will be set automatically after login",
+      "enabled": true
+    },
+    {
+      "key": "assessment_id",
+      "value": "1",
+      "description": "Assessment ID for testing - will be set automatically after creating assessment",
+      "enabled": true
+    },
+    {
+      "key": "target_user_id",
+      "value": "user123",
+      "description": "Target user ID for assessment creation",
+      "enabled": true
+    },
+    {
+      "key": "team_id",
+      "value": "1",
+      "description": "Team ID for team-based operations",
+      "enabled": true
+    },
+    {
+      "key": "assessment_cycle_id",
+      "value": "1",
+      "description": "Assessment cycle ID for bulk operations",
+      "enabled": true
+    },
+    {
+      "key": "hr_email",
+      "value": "hr@company.com",
+      "description": "HR user email for login",
+      "enabled": true
+    },
+    {
+      "key": "hr_password",
+      "value": "password123",
+      "description": "HR user password for login",
+      "enabled": true
+    },
+    {
+      "key": "lead_email",
+      "value": "lead@company.com",
+      "description": "Team Lead user email for login",
+      "enabled": true
+    },
+    {
+      "key": "lead_password",
+      "value": "password123",
+      "description": "Team Lead user password for login",
+      "enabled": true
+    },
+    {
+      "key": "employee_email",
+      "value": "employee@company.com",
+      "description": "Employee user email for login",
+      "enabled": true
+    },
+    {
+      "key": "employee_password",
+      "value": "password123",
+      "description": "Employee user password for login",
+      "enabled": true
+    },
+    {
+      "key": "team_lead_2_email",
+      "value": "lead2@company.com",
+      "description": "Second team lead for cross-team testing",
+      "enabled": true
+    },
+    {
+      "key": "team_lead_2_password",
+      "value": "password123",
+      "description": "Second team lead password",
+      "enabled": true
+    }
+  ]
+}

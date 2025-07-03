@@ -60,6 +60,7 @@ export interface SkillType {
 export interface ScoreType {
   id: number;
   assessmentId: number;
+  selfScore?: number;
   leadScore?: number;
   updatedAt: Date;
   skillId: number;

@@ -1,0 +1,714 @@
+{
+  "info": {
+    "name": "Assessment API Collection",
+    "description": "Complete collection for testing the Assessment API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assessment_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "target_user_id",
+      "value": "user123",
+      "type": "string"
+    },
+    {
+      "key": "team_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "assessment_cycle_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login (Get JWT Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('jwt_token', response.data.token);",
+                  "        console.log('JWT token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hr@company.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "HR Operations",
+      "item": [
+        {
+          "name": "1. HR Initiate Assessment for All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.assessmentCycleId) {",
+                  "        pm.collectionVariables.set('assessment_cycle_id', response.data.assessmentCycleId);",
+                  "        console.log('Assessment Cycle ID saved:', response.data.assessmentCycleId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skillIds\": [1, 2, 3],\n  \"scheduledDate\": \"2025-07-15T10:00:00Z\",\n  \"comments\": \"Q3 2025 Company-wide Performance Assessment\",\n  \"assessmentTitle\": \"Q3 Performance Review\",\n  \"includeTeams\": [\"all\"],\n  \"excludeUsers\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/initiate-bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "initiate-bulk"]
+            }
+          }
+        },
+        {
+          "name": "2. HR Initiate Assessment for Specific Teams",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.assessmentCycleId) {",
+                  "        pm.collectionVariables.set('assessment_cycle_id', response.data.assessmentCycleId);",
+                  "        console.log('Assessment Cycle ID saved:', response.data.assessmentCycleId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skillIds\": [1, 2, 3, 4],\n  \"scheduledDate\": \"2025-07-15T10:00:00Z\",\n  \"comments\": \"Technical Skills Assessment for Engineering Teams\",\n  \"assessmentTitle\": \"Technical Skills Review\",\n  \"includeTeams\": [1, 2, 3],\n  \"excludeUsers\": [\"user456\", \"user789\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/initiate-bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "initiate-bulk"]
+            }
+          }
+        },
+        {
+          "name": "3. HR Get All Assessment Cycles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/cycles",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "cycles"]
+            }
+          }
+        },
+        {
+          "name": "4. HR Get Assessment Cycle Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/cycles/{{assessment_cycle_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "cycles", "{{assessment_cycle_id}}"]
+            }
+          }
+        },
+        {
+          "name": "5. HR Get Team Assessment Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/team-summary/{{team_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "team-summary", "{{team_id}}"]
+            }
+          }
+        },
+        {
+          "name": "6. HR Final Review (Approve)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true,\n  \"comments\": \"Assessment approved by HR. Good work!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/hr-final-review/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "hr-final-review", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "7. HR Final Review (Reject)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": false,\n  \"comments\": \"Assessment needs revision. Please reassess the technical skills.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/hr-final-review/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "hr-final-review", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "8. HR Cancel Assessment Cycle",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comments\": \"Assessment cycle cancelled due to organizational restructuring\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/cycles/{{assessment_cycle_id}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "cycles", "{{assessment_cycle_id}}", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "9. HR Get Assessment Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "statistics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Team Lead Operations",
+      "item": [
+        {
+          "name": "1. Lead Get My Team Assessments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/my-team",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "my-team"]
+            }
+          }
+        },
+        {
+          "name": "2. Lead Get Team Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/team-members",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "team-members"]
+            }
+          }
+        },
+        {
+          "name": "3. Lead Write Assessment for Team Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.id) {",
+                  "        pm.collectionVariables.set('assessment_id', response.data.id);",
+                  "        console.log('Assessment ID saved:', response.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skillScores\": [\n    {\n      \"skillId\": 1,\n      \"leadScore\": 4,\n      \"comments\": \"Excellent JavaScript skills, shows deep understanding\"\n    },\n    {\n      \"skillId\": 2,\n      \"leadScore\": 3,\n      \"comments\": \"Good React knowledge, could improve on advanced patterns\"\n    },\n    {\n      \"skillId\": 3,\n      \"leadScore\": 5,\n      \"comments\": \"Outstanding problem-solving abilities\"\n    }\n  ],\n  \"comments\": \"Overall good performance, ready for next level responsibilities\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/lead-assessment/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "lead-assessment", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "4. Lead Get Team Assessment Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/team-statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "team-statistics"]
+            }
+          }
+        },
+        {
+          "name": "5. Lead Get Assessment by Team Member",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/team-member/{{target_user_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "team-member", "{{target_user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "6. Lead Get Pending Team Assessments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/team-pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "team-pending"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employee Operations",
+      "item": [
+        {
+          "name": "1. Employee Review Assessment (Approve)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true,\n  \"comments\": \"I agree with the assessment. Thank you for the feedback!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/employee-review/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "employee-review", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "2. Employee Review Assessment (Reject)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": false,\n  \"comments\": \"I disagree with the React score. I have successfully delivered multiple React projects.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/employee-review/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "employee-review", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "3. Employee Get Pending Assessments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/requiring-action",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "requiring-action"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Common Operations",
+      "item": [
+        {
+          "name": "1. Get Assessment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "2. Get Assessment with History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/history/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "history", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "3. Get All Assessments for Role",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "all"]
+            }
+          }
+        },
+        {
+          "name": "4. Get Dashboard Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "5. Check Assessment Accessibility",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/accessibility/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "accessibility", "{{assessment_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Team Security Testing",
+      "item": [
+        {
+          "name": "1. Test Cross-Team Access Prevention",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/team-member/other-team-user",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "team-member", "other-team-user"]
+            }
+          }
+        },
+        {
+          "name": "2. Test Team Lead Access to Other Team",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/team-summary/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "team-summary", "999"]
+            }
+          }
+        },
+        {
+          "name": "3. Test Employee Direct Access to Team Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/my-team",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "my-team"]
+            }
+          }
+        },
+        {
+          "name": "4. Test Non-HR Bulk Assessment Creation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skillIds\": [1, 2, 3],\n  \"scheduledDate\": \"2025-07-15T10:00:00Z\",\n  \"comments\": \"Unauthorized bulk assessment\",\n  \"assessmentTitle\": \"Unauthorized Test\",\n  \"includeTeams\": [\"all\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/initiate-bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "initiate-bulk"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Testing",
+      "item": [
+        {
+          "name": "1. Test Invalid Assessment ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/invalid-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "invalid-id"]
+            }
+          }
+        },
+        {
+          "name": "2. Test NaN Assessment ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/NaN",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "NaN"]
+            }
+          }
+        },
+        {
+          "name": "3. Test Empty Assessment ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", ""]
+            }
+          }
+        },
+        {
+          "name": "4. Test Unauthorized Access",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "{{assessment_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy API Tests",
+      "item": [
+        {
+          "name": "1. Legacy Create Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetUserId\": \"{{target_user_id}}\",\n  \"skillIds\": [1, 2, 3]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "create"]
+            }
+          }
+        },
+        {
+          "name": "2. Legacy Get Assessment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "3. Legacy Get All Assessments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "all"]
+            }
+          }
+        },
+        {
+          "name": "4. Legacy Review Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true,\n  \"comments\": \"Legacy review test\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assessment/review/{{assessment_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "review", "{{assessment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "5. Legacy Get My Assigned Assessments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assessment/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessment", "pending"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

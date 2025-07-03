@@ -51,6 +51,11 @@ export interface AssessmentData {
 
 export interface SkillAssessmentData {
   skillId: number;
+  selfScore: number;
+}
+
+export interface LeadSkillAssessmentData {
+  skillId: number;
   leadScore: number;
 }
 
@@ -67,6 +72,10 @@ export interface ReviewData {
   leadScore?: number;
   status?: string;
   comments?: string;
+  scoreUpdates?: Array<{
+    skillId: number;
+    score: number;
+  }>;
   [key: string]: any;
 }
 

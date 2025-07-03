@@ -3,6 +3,7 @@ import Boom from "@hapi/boom";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller, AuthRequest } from '../types/hapi';
 import { SkillAssessmentData, ReviewData } from '../types/controller';
+import { LeadSkillAssessmentData } from '../types/services';
 import { role, AssessmentStatus } from '../enum/enum';
 
 const AssessmentController: Controller = {
@@ -77,15 +78,35 @@ const AssessmentController: Controller = {
     try {
       const { assessmentId } = req.params;
       const { skillScores, comments } = req.payload as {
-        skillScores: SkillAssessmentData[];
+        skillScores: LeadSkillAssessmentData[];
         comments?: string;
       };
+      
+      // Validate assessmentId parameter
+      if (!assessmentId || assessmentId === 'undefined' || assessmentId === 'NaN') {
+        return h
+          .response({
+            success: false,
+            error: "Invalid assessment ID provided",
+          })
+          .code(400);
+      }
+      
+      const parsedId = parseInt(assessmentId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Assessment ID must be a valid number",
+          })
+          .code(400);
+      }
       
       const leadId = req.auth.credentials.user.id;
       
       const assessment = await AssessmentService.writeLeadAssessment(
         leadId,
-        parseInt(assessmentId),
+        parsedId,
         skillScores,
         comments || ""
       );
@@ -145,11 +166,31 @@ const AssessmentController: Controller = {
         comments?: string;
       };
       
+      // Validate assessmentId parameter
+      if (!assessmentId || assessmentId === 'undefined' || assessmentId === 'NaN') {
+        return h
+          .response({
+            success: false,
+            error: "Invalid assessment ID provided",
+          })
+          .code(400);
+      }
+      
+      const parsedId = parseInt(assessmentId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Assessment ID must be a valid number",
+          })
+          .code(400);
+      }
+      
       const employeeId = req.auth.credentials.user.id;
       
       const assessment = await AssessmentService.employeeReviewAssessment(
         employeeId,
-        parseInt(assessmentId),
+        parsedId,
         approved,
         comments || ""
       );
@@ -209,11 +250,31 @@ const AssessmentController: Controller = {
         comments?: string;
       };
       
+      // Validate assessmentId parameter
+      if (!assessmentId || assessmentId === 'undefined' || assessmentId === 'NaN') {
+        return h
+          .response({
+            success: false,
+            error: "Invalid assessment ID provided",
+          })
+          .code(400);
+      }
+      
+      const parsedId = parseInt(assessmentId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Assessment ID must be a valid number",
+          })
+          .code(400);
+      }
+      
       const hrId = req.auth.credentials.user.id;
       
       const assessment = await AssessmentService.hrFinalReview(
         hrId,
-        parseInt(assessmentId),
+        parsedId,
         approved,
         comments || ""
       );
@@ -269,9 +330,27 @@ const AssessmentController: Controller = {
     try {
       const { assessmentId } = req.params;
       
-      const assessment = await AssessmentService.getAssessmentWithHistory(
-        parseInt(assessmentId)
-      );
+      // Validate assessmentId parameter
+      if (!assessmentId || assessmentId === 'undefined' || assessmentId === 'NaN') {
+        return h
+          .response({
+            success: false,
+            error: "Invalid assessment ID provided",
+          })
+          .code(400);
+      }
+      
+      const parsedId = parseInt(assessmentId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Assessment ID must be a valid number",
+          })
+          .code(400);
+      }
+      
+      const assessment = await AssessmentService.getAssessmentWithHistory(parsedId);
 
       return h
         .response({
@@ -370,9 +449,27 @@ const AssessmentController: Controller = {
     try {
       const { assessmentId } = req.params;
       
-      const isAccessible = await AssessmentService.isAssessmentAccessible(
-        parseInt(assessmentId)
-      );
+      // Validate assessmentId parameter
+      if (!assessmentId || assessmentId === 'undefined' || assessmentId === 'NaN') {
+        return h
+          .response({
+            success: false,
+            error: "Invalid assessment ID provided",
+          })
+          .code(400);
+      }
+      
+      const parsedId = parseInt(assessmentId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Assessment ID must be a valid number",
+          })
+          .code(400);
+      }
+      
+      const isAccessible = await AssessmentService.isAssessmentAccessible(parsedId);
 
       return h
         .response({
@@ -497,6 +594,26 @@ const AssessmentController: Controller = {
       const currentUserId = req.auth.credentials.user.id;
       const userRole = req.auth.credentials.user.role;
       
+      // Validate assessmentId parameter
+      if (!assessmentId || assessmentId === 'undefined' || assessmentId === 'NaN') {
+        return h
+          .response({
+            success: false,
+            error: "Invalid assessment ID provided",
+          })
+          .code(400);
+      }
+      
+      const parsedId = parseInt(assessmentId);
+      if (isNaN(parsedId)) {
+        return h
+          .response({
+            success: false,
+            error: "Assessment ID must be a valid number",
+          })
+          .code(400);
+      }
+      
       // Only HR can cancel assessments
       if (userRole !== role.HR) {
         return h
@@ -507,7 +624,7 @@ const AssessmentController: Controller = {
           .code(403);
       }
       
-      const assessment = await AssessmentService.getAssessmentWithHistory(parseInt(assessmentId));
+      const assessment = await AssessmentService.getAssessmentWithHistory(parsedId);
       
       if (!assessment) {
         return h
@@ -531,7 +648,7 @@ const AssessmentController: Controller = {
       // Update assessment status to cancelled
       // This would need to be implemented in the service
       // For now, we'll call the existing cancelAssessment method
-      const result = await AssessmentService.cancelAssessment(parseInt(assessmentId));
+      const result = await AssessmentService.cancelAssessment(parsedId);
 
       return h
         .response({
@@ -583,6 +700,9 @@ const AssessmentController: Controller = {
 
   getAssessmentById: async (req: Request, h: ResponseToolkit) => {
     // Legacy method - redirect to new workflow
+    // Map the old 'id' parameter to the new 'assessmentId' parameter
+    const { id } = req.params;
+    req.params.assessmentId = id;
     return AssessmentController.getAssessmentWithHistory(req, h);
   },
 
