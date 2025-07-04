@@ -8,7 +8,7 @@ import requestRoutes from "./routes/SkillUpdateRequestRoute";
 import Jwt from "@hapi/jwt";
 import authRoutes from "./routes/AuthRoute";
 // import { seedInitialData } from "./seeder";
-import assessmentRoutes from "./routes/AssessmentRoute";
+import assessmentRoutes from "./routes/AssessmentRoute.new";
 
 dotenv.config();
 

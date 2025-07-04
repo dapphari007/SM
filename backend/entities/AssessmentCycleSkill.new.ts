@@ -40,3 +40,5 @@ export const AssessmentCycleSkill = new EntitySchema<AssessmentCycleSkillType>({
     },
   },
 });
+
+export default AssessmentCycleSkill;

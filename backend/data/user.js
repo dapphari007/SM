@@ -158,11 +158,11 @@ export default [
     "userId": "LMT20507",
     "name": "HARISH K",
     "email": "harishk@lumel.com",
-    "roleId": 3,
-    "positionId": 4,
-    "teamId": null,
+    "roleId": 2,
+    "positionId": 1,
+    "teamId": 1,
     "leadId": null,
-    "hrId": null
+    "hrId": 1
   },
   {
     "id": 16,

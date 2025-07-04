@@ -11,14 +11,17 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "declaration": false
+    "declaration": false,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
-    "**/*.ts",
-    "**/*.js"
+    "./**/*.ts",
+    "./**/*.js"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "../frontend/**/*",
+    "../node_modules/**/*"
   ]
 }

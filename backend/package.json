@@ -28,10 +28,12 @@
     "bell": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
+    "hapi": "^18.1.0",
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^4.2.0",
     "pg": "^8.16.0",
-    "typeorm": "^0.3.24"
+    "typeorm": "^0.3.24",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

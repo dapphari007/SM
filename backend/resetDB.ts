@@ -6,7 +6,7 @@ import { Role } from "./entities/Role";
 import { Position } from "./entities/Position";
 import { Team } from "./entities/Team";
 import { Auth } from "./entities/Auth";
-import { AssessmentRequest } from "./entities/AssessmentRequest";
+import { AssessmentRequest } from "./entities/AssessmentRequest.new";
 import { Score } from "./entities/Score";
 import { Audit } from "./entities/Audit";
 import dotenv from "dotenv";

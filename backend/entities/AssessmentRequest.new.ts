@@ -21,6 +21,7 @@ export interface AssessmentRequestType {
   isAccessible: boolean;
   requestedAt: Date;
   updatedAt: Date;
+  completedAt?: Date;
   // Relations
   user?: any;
   cycle?: any;
@@ -126,6 +127,11 @@ export const AssessmentRequest = new EntitySchema<AssessmentRequestType>({
       type: "timestamp",
       name: "updated_at",
       updateDate: true,
+    },
+    completedAt: {
+      type: "timestamp",
+      name: "completed_at",
+      nullable: true,
     },
   },
   relations: {

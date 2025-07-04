@@ -1,6 +1,8 @@
 import { DataSource } from "typeorm";
-import dotenv from "dotenv";
-import { AssessmentRequest } from "../entities/AssessmentRequest";
+import * as dotenv from "dotenv";
+import { AssessmentRequest } from "../entities/AssessmentRequest.new";
+import { AssessmentCycle } from "../entities/AssessmentCycle.new";
+import { AssessmentCycleSkill } from "../entities/AssessmentCycleSkill.new";
 import { Audit } from "../entities/Audit";
 import { Position } from "../entities/Position";
 import { Role } from "../entities/Role";
@@ -25,6 +27,8 @@ export const AppDataSource = new DataSource({
   entities: [
     Skill,
     AssessmentRequest,
+    AssessmentCycle,
+    AssessmentCycleSkill,
     SkillUpgradeGuide,
     Role,
     Score,
@@ -42,6 +46,8 @@ export const roleRepo = AppDataSource.getRepository(Role);
 export const positionRepo = AppDataSource.getRepository(Position);
 export const teamRepo = AppDataSource.getRepository(Team);
 export const assessmentRequestRepo = AppDataSource.getRepository(AssessmentRequest);
+export const assessmentCycleRepo = AppDataSource.getRepository(AssessmentCycle);
+export const assessmentCycleSkillRepo = AppDataSource.getRepository(AssessmentCycleSkill);
 export const scoreRepo = AppDataSource.getRepository(Score);
 export const skillRepo = AppDataSource.getRepository(Skill);
 export const AuditRepo = AppDataSource.getRepository(Audit);

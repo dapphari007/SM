@@ -95,3 +95,5 @@ export const AssessmentCycle = new EntitySchema<AssessmentCycleType>({
     },
   },
 });
+
+export default AssessmentCycle;

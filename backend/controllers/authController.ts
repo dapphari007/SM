@@ -7,27 +7,12 @@ import { User } from "../entities/User";
 import dotenv from "dotenv";
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { Controller } from '../types/hapi';
-
+import {LoginPayload,SignupPayload,MicrosoftAccount} from "../types/controller";
 dotenv.config();
 
 const userRepo = AppDataSource.getRepository(User);
 // const authRepo = AppDataSource.getRepository(Auth);
 
-interface LoginPayload {
-  email: string;
-  password: string;
-}
-
-interface SignupPayload {
-  email: string;
-  password: string;
-}
-
-interface MicrosoftAccount {
-  name: string;
-  username: string;
-  homeAccountId: string;
-}
 
 const msalConfig = {
   auth: {

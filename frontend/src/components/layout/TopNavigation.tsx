@@ -47,8 +47,7 @@ const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
     const baseItems = [
       { id: "dashboard", label: "Dashboard", icon: BarChart3 },
       { id: "skill-criteria", label: "Skill Criteria", icon: Target },
-      { id: "skill-upgrade", label: "Upgrade Guide", icon: TrendingUp },
-      { id: "skill-assessment", label: "Assessment", icon: Grid3X3 },
+      { id: "skill-upgrade", label: "Upgrade Guide", icon: TrendingUp }
     ];
 
     if (user?.role?.name === "hr" || user?.role?.name === "lead") {
@@ -57,13 +56,22 @@ const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
         0,
         { id: "team-overview", label: "Team Overview", icon: Users },
         { id: "skill-matrix", label: "Skill Matrix", icon: Grid3X3 },
-        {
-          id: "pending-assessments",
-          label: "Pending Reviews",
-          icon: ClipboardCheck,
-        }
+        {id:"team-assessment", label:"Team Assessment",icon:Grid3X3},
+        //To display the Pending reviews
+        // {
+        //   id: "pending-assessments",
+        //   label: "Pending Reviews",
+        //   icon: ClipboardCheck,
+        // }
       );
     }
+    //To display the Assessment 
+    // if(user?.role?.name==="lead"){
+    //   baseItems.splice(
+    //     2,0,
+    //     {id:"skill-assessment",label:"Assessment",icon:Grid3X3}
+    //   );
+    // }
 
     return baseItems;
   };
@@ -157,7 +165,7 @@ const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
             </div>
           </div>
         </div>
-
+                        
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t bg-white">

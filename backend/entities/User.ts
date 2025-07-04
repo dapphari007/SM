@@ -76,7 +76,7 @@ export const User = new EntitySchema<UserType>({
     Requests: {
       target: "AssessmentRequest",
       type: "one-to-many",
-      inverseSide: "User",
+      inverseSide: "user",
     },
     role: {
       target: "Role",
