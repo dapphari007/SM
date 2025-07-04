@@ -316,6 +316,14 @@ const TeamAssessment = () => {
         });
     };
 
+    // Check if team member has pending assessments
+    const getMemberPendingAssessment = (memberId: string): AssessmentWithHistory | null => {
+        return pendingAssessments.find(assessment => 
+            assessment.userId === memberId && 
+            (assessment.status === AssessmentStatus.LEAD_WRITING || assessment.status === AssessmentStatus.INITIATED)
+        ) || null;
+    };
+
     const tabs = [
         { id: "overview", label: "Team Overview", icon: Users },
         { id: "assessments", label: "All Assessments", icon: FileText },
@@ -413,6 +421,8 @@ const TeamAssessment = () => {
                             handleViewScores={handleViewScores}
                             getAverageSkillLevel={getAverageSkillLevel}
                             getSkillLevelColor={getSkillLevelColor}
+                            getMemberPendingAssessment={getMemberPendingAssessment}
+                            handleWriteAssessment={handleWriteAssessment}
                         />
                     )}
 
@@ -490,7 +500,9 @@ const TeamOverviewTab: React.FC<{
     handleViewScores: (member: TeamMember) => void;
     getAverageSkillLevel: (member: TeamMember) => number;
     getSkillLevelColor: (level: number) => string;
-}> = ({ teamMembers, searchTerm, setSearchTerm, isLoading, handleViewScores, getAverageSkillLevel, getSkillLevelColor }) => {
+    getMemberPendingAssessment: (memberId: string) => AssessmentWithHistory | null;
+    handleWriteAssessment: (assessment: AssessmentWithHistory) => void;
+}> = ({ teamMembers, searchTerm, setSearchTerm, isLoading, handleViewScores, getAverageSkillLevel, getSkillLevelColor, getMemberPendingAssessment, handleWriteAssessment }) => {
     const filteredMembers = teamMembers.filter((member) => {
         const matchesSearch =
             member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -524,20 +536,36 @@ const TeamOverviewTab: React.FC<{
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-6">
-                    {filteredMembers.map((member) => (
+                    {filteredMembers.map((member) => {
+                        const pendingAssessment = getMemberPendingAssessment(member.id);
+                        return (
                         <div
                             key={member.id}
-                            className="bg-gray-50 rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-shadow"
+                            className={`rounded-lg border shadow-sm hover:shadow-lg transition-shadow ${
+                                pendingAssessment 
+                                    ? "bg-yellow-50 border-yellow-200" 
+                                    : "bg-gray-50 border-gray-200"
+                            }`}
                         >
                             <div className="p-6">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                            <User className="h-6 w-6 text-blue-600" />
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                                            pendingAssessment ? "bg-yellow-100" : "bg-blue-100"
+                                        }`}>
+                                            <User className={`h-6 w-6 ${
+                                                pendingAssessment ? "text-yellow-600" : "text-blue-600"
+                                            }`} />
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-lg">{member.name}</h3>
                                             <p className="text-sm text-gray-500">ID: {member.userId}</p>
+                                            {pendingAssessment && (
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
+                                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                                    Assessment Pending
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                     <span
@@ -578,6 +606,21 @@ const TeamOverviewTab: React.FC<{
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
+                                        {(() => {
+                                            const pendingAssessment = getMemberPendingAssessment(member.id);
+                                            if (pendingAssessment) {
+                                                return (
+                                                    <button
+                                                        onClick={() => handleWriteAssessment(pendingAssessment)}
+                                                        className="px-3 py-1.5 text-sm bg-yellow-600 text-white rounded-md hover:bg-yellow-700 flex items-center gap-1"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                        {pendingAssessment.status === AssessmentStatus.INITIATED ? 'Start Assessment' : 'Write Assessment'}
+                                                    </button>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                         <button
                                             className={`px-3 py-1.5 text-sm border rounded-md transition-colors ${
                                                 member.hasRecentAssessment
@@ -601,7 +644,8 @@ const TeamOverviewTab: React.FC<{
                                 )}
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -728,7 +772,9 @@ const PendingActionsTab: React.FC<{
         );
     }
 
-    const leadWritingAssessments = pendingAssessments.filter(a => a.status === AssessmentStatus.LEAD_WRITING);
+    const leadWritingAssessments = pendingAssessments.filter(a => 
+        a.status === AssessmentStatus.LEAD_WRITING || a.status === AssessmentStatus.INITIATED
+    );
 
     return (
         <div className="space-y-4">
@@ -764,13 +810,16 @@ const PendingActionsTab: React.FC<{
 
                             <div className="mb-4 p-3 bg-white rounded-md border">
                                 <p className="text-sm text-gray-700 mb-2">
-                                    <strong>Next Action:</strong> Write assessment for team member
+                                    <strong>Next Action:</strong> {assessment.status === AssessmentStatus.INITIATED ? 'Assessment ready to start' : 'Write assessment for team member'}
                                 </p>
                                 <p className="text-sm text-gray-600">
                                     Scheduled: {formatDate(assessment.scheduledDate)}
                                 </p>
                                 <p className="text-sm text-gray-600">
                                     Skills to assess: {assessment.detailedScores?.length || 0}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    Status: <span className="font-medium">{assessment.status.replace('_', ' ')}</span>
                                 </p>
                             </div>
 
@@ -787,7 +836,7 @@ const PendingActionsTab: React.FC<{
                                     className="px-3 py-1.5 text-sm bg-yellow-600 text-white rounded-md hover:bg-yellow-700 flex items-center gap-1"
                                 >
                                     <Edit className="h-4 w-4" />
-                                    Write Assessment
+                                    {assessment.status === AssessmentStatus.INITIATED ? 'Start Assessment' : 'Write Assessment'}
                                 </button>
                             </div>
                         </div>
@@ -846,18 +895,20 @@ const WriteAssessmentModal: React.FC<{
                                                 Current: {skillScores[score.skillId] || 1}/4
                                             </span>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-1">
                                             {[1, 2, 3, 4].map((rating) => (
                                                 <button
                                                     key={rating}
                                                     onClick={() => handleScoreChange(score.skillId, rating)}
-                                                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                                                    className={`p-2 rounded-md transition-colors ${
                                                         skillScores[score.skillId] === rating
-                                                            ? "bg-blue-600 text-white"
-                                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                                            ? "text-yellow-500"
+                                                            : "text-gray-300 hover:text-yellow-400"
                                                     }`}
                                                 >
-                                                    {rating}
+                                                    <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                                                        <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z"/>
+                                                    </svg>
                                                 </button>
                                             ))}
                                         </div>

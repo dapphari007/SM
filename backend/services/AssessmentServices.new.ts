@@ -91,24 +91,7 @@ const AssessmentService = {
         throw new Error("HR can only initiate assessments for employees and team leads");
       }
 
-      // Check for existing active assessments
-      const existingAssessment = await assessmentRequestRepo.findOne({
-        where: {
-          userId: targetUserId,
-          status: In([
-            AssessmentStatus.INITIATED,
-            AssessmentStatus.LEAD_WRITING,
-            AssessmentStatus.EMPLOYEE_REVIEW,
-            AssessmentStatus.EMPLOYEE_APPROVED,
-            AssessmentStatus.EMPLOYEE_REJECTED,
-            AssessmentStatus.HR_FINAL_REVIEW
-          ]),
-        },
-      });
-
-      if (existingAssessment) {
-        throw new Error("User already has an active assessment");
-      }
+      // Allow multiple active assessments per user - removed check for existing active assessments
 
       // Create assessment request
       const assessment = assessmentRequestRepo.create({
@@ -356,6 +339,11 @@ const AssessmentService = {
       const scores = await scoreRepo.find({
         where: { assessmentId: assessmentId },
         relations: ["Skill"],
+      });
+
+      console.log(`DEBUG: getAssessmentWithHistory - Assessment ${assessmentId} has ${scores.length} scores`);
+      scores.forEach(score => {
+        console.log(`DEBUG: Score ${score.id} - Skill ${score.skillId} (${score.Skill?.name}) - Lead Score: ${score.leadScore}`);
       });
 
       // Get audit history
@@ -631,6 +619,8 @@ const AssessmentService = {
       // Get target users based on team selection
       let targetUsers: UserType[] = [];
       
+      console.log('DEBUG: includeTeams:', includeTeams);
+      
       if (includeTeams.includes('all')) {
         // Get all employees and team leads
         targetUsers = await userRepo.find({
@@ -639,9 +629,11 @@ const AssessmentService = {
           },
           relations: ["role", "Team"]
         });
+        console.log('DEBUG: Found users (all):', targetUsers.length);
       } else {
         // Get users from specific teams
         const teamIds = includeTeams.filter(id => id !== 'all').map(Number);
+        console.log('DEBUG: teamIds:', teamIds);
         targetUsers = await userRepo.find({
           where: {
             teamId: In(teamIds),
@@ -649,30 +641,21 @@ const AssessmentService = {
           },
           relations: ["role", "Team"]
         });
+        console.log('DEBUG: Found users (teams):', targetUsers.length);
       }
 
+      console.log('DEBUG: targetUsers before exclusion:', targetUsers.length);
+      
       // Exclude specified users
       if (excludeUsers.length > 0) {
         targetUsers = targetUsers.filter(user => !excludeUsers.includes(user.id));
+        console.log('DEBUG: targetUsers after exclusion:', targetUsers.length);
       }
 
-      // Check for existing active assessments and exclude those users
-      const existingAssessments = await assessmentRequestRepo.find({
-        where: {
-          userId: In(targetUsers.map(u => u.id)),
-          status: In([
-            AssessmentStatus.INITIATED,
-            AssessmentStatus.LEAD_WRITING,
-            AssessmentStatus.EMPLOYEE_REVIEW,
-            AssessmentStatus.EMPLOYEE_APPROVED,
-            AssessmentStatus.EMPLOYEE_REJECTED,
-            AssessmentStatus.HR_FINAL_REVIEW
-          ]),
-        },
-      });
-
-      const usersWithActiveAssessments = existingAssessments.map(a => a.userId);
-      const eligibleUsers = targetUsers.filter(user => !usersWithActiveAssessments.includes(user.id));
+      // Allow multiple active assessments - users are eligible regardless of existing assessments
+      const eligibleUsers = targetUsers;
+      
+      console.log('DEBUG: eligibleUsers final count (allowing multiple assessments):', eligibleUsers.length);
 
       // Create individual assessments for each eligible user
       const assessments = [];
@@ -691,6 +674,8 @@ const AssessmentService = {
         const savedAssessment = await assessmentRequestRepo.save(assessment);
         assessments.push(savedAssessment);
 
+        console.log(`DEBUG: Created assessment ${savedAssessment.id} for user ${user.id}`);
+
         // Create initial score entries for skills for this assessment
         for (const skillId of skillIds) {
           const skill = await skillRepo.findOneBy({ id: skillId });
@@ -700,7 +685,10 @@ const AssessmentService = {
               skillId: skillId,
               leadScore: null
             });
-            await scoreRepo.save(score);
+            const savedScore = await scoreRepo.save(score);
+            console.log(`DEBUG: Created score ${savedScore.id} for skill ${skillId} in assessment ${savedAssessment.id}`);
+          } else {
+            console.log(`DEBUG: Skill ${skillId} not found`);
           }
         }
 
