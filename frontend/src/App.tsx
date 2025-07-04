@@ -7,6 +7,7 @@ import { store } from "./store/store";
 import { loadStoredAuth } from "./store/authSlice";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import SkillAssessmentPage from "./components/assessment/SkillAssessmentPage";
 
 
 // Initialize auth state from localStorage
@@ -19,6 +20,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/*" element={<Index />} />
+            <Route path="/skill-assessment" element={<SkillAssessmentPage/>}/>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
