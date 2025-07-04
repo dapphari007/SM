@@ -1240,7 +1240,84 @@ const AssessmentService = {
     } catch (error: any) {
       throw new Error(`Failed to get user's latest approved scores: ${error.message}`);
     }
-  }
+  },
+
+  // Get user assessment summaries (only latest assessment per user with total cycles count)
+  getUserAssessmentSummaries: async (): Promise<any[]> => {
+    try {
+      // Get all users with assessments
+      const usersWithAssessments = await userRepo.find({
+        relations: ["role", "Team", "position"],
+        order: { name: "ASC" }
+      });
+
+      const userSummaries = [];
+
+      for (const user of usersWithAssessments) {
+        // Get all assessments for this user
+        const userAssessments = await assessmentRequestRepo.find({
+          where: { userId: user.id },
+          order: { requestedAt: "DESC" }
+        });
+
+        if (userAssessments.length > 0) {
+          // Get the latest assessment
+          const latestAssessment = userAssessments[0];
+
+          // Get detailed scores for the latest assessment
+          const scores = await scoreRepo.find({
+            where: { assessmentId: latestAssessment.id },
+            relations: ["Skill"]
+          });
+
+          // Get audit history for the latest assessment
+          const history = await AuditRepo.find({
+            where: { assessmentId: latestAssessment.id },
+            order: { auditedAt: "ASC" }
+          });
+
+          userSummaries.push({
+            user: user,
+            latestAssessment: {
+              ...latestAssessment,
+              detailedScores: scores,
+              history: history,
+              currentCycle: latestAssessment.currentCycle || 1,
+              isAccessible: true
+            },
+            totalAssessments: userAssessments.length,
+            totalCycles: Math.max(...userAssessments.map(a => a.currentCycle || 1)),
+            allAssessments: userAssessments // This will be used for history modal
+          });
+        }
+      }
+
+      return userSummaries;
+    } catch (error: any) {
+      throw new Error(`Failed to get user assessment summaries: ${error.message}`);
+    }
+  },
+
+  // Get all assessments for a specific user (for history modal)
+  getUserAssessmentHistory: async (userId: string): Promise<AssessmentWithHistory[]> => {
+    try {
+      const assessments = await assessmentRequestRepo.find({
+        where: { userId: userId },
+        relations: ["user"],
+        order: { requestedAt: "DESC" }
+      });
+
+      const detailedAssessments: AssessmentWithHistory[] = [];
+      for (const assessment of assessments) {
+        const detailed = await AssessmentService.getAssessmentWithHistory(assessment.id);
+        detailedAssessments.push(detailed);
+      }
+
+      return detailedAssessments;
+    } catch (error: any) {
+      throw new Error(`Failed to get user assessment history: ${error.message}`);
+    }
+  },
 };
 
 export default AssessmentService;

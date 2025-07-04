@@ -252,6 +252,14 @@ export const assessmentService = {
 
   getUserLatestApprovedScoresByUserId: (userId: number) =>
     apiRequest(`/assess/scores/${userId}`),
+
+  // Get user assessment summaries (HR only)
+  getUserAssessmentSummaries: () =>
+    apiRequest("/assess/user-summaries"),
+
+  // Get user assessment history (HR only)  
+  getUserAssessmentHistory: (userId: string) =>
+    apiRequest(`/assess/user-history/${userId}`),
 };
 
 // Skill Upgrade Guide Services

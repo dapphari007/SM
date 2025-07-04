@@ -1181,6 +1181,86 @@ const AssessmentController: Controller = {
     }
   },
 
+  // Get user assessment summaries (for HR All Assessments view)
+  getUserAssessmentSummaries: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const userRole = req.auth.credentials.user.role;
+      
+      // Only HR can access user assessment summaries
+      if (userRole?.name !== role.HR) {
+        return h
+          .response({
+            success: false,
+            error: "Only HR can access user assessment summaries",
+          })
+          .code(403);
+      }
+      
+      const summaries = await AssessmentService.getUserAssessmentSummaries();
+      
+      return h
+        .response({
+          success: true,
+          data: summaries,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting user assessment summaries:", error);
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
+  // Get user assessment history (for history modal)
+  getUserAssessmentHistory: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const { userId } = req.params;
+      const userRole = req.auth.credentials.user.role;
+      
+      // Only HR can access user assessment history
+      if (userRole?.name !== role.HR) {
+        return h
+          .response({
+            success: false,
+            error: "Only HR can access user assessment history",
+          })
+          .code(403);
+      }
+      
+      if (!userId) {
+        return h
+          .response({
+            success: false,
+            error: "User ID is required",
+          })
+          .code(400);
+      }
+      
+      const history = await AssessmentService.getUserAssessmentHistory(userId);
+      
+      return h
+        .response({
+          success: true,
+          data: history,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting user assessment history:", error);
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
   // ===== END NEW TEAM-BASED BULK ASSESSMENT METHODS =====
 };
 

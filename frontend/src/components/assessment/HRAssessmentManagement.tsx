@@ -50,6 +50,7 @@ interface Skill {
 const HRAssessmentManagement: React.FC = () => {
   const { user } = useAuth();
   const [assessments, setAssessments] = useState<AssessmentWithHistory[]>([]);
+  const [userSummaries, setUserSummaries] = useState<any[]>([]);
   const [cycles, setCycles] = useState<AssessmentCycle[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -63,7 +64,10 @@ const HRAssessmentManagement: React.FC = () => {
   const [showInitiateModal, setShowInitiateModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<AssessmentWithHistory | null>(null);
+  const [selectedUserHistory, setSelectedUserHistory] = useState<AssessmentWithHistory[]>([]);
+  const [selectedUserName, setSelectedUserName] = useState("");
   const [reviewComments, setReviewComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -87,8 +91,9 @@ const HRAssessmentManagement: React.FC = () => {
   const loadHRData = async () => {
     setIsLoading(true);
     try {
-      const [assessmentsRes, cyclesRes, usersRes, teamsRes, skillsRes] = await Promise.all([
+      const [assessmentsRes, userSummariesRes, cyclesRes, usersRes, teamsRes, skillsRes] = await Promise.all([
         assessmentService.getAssessmentsForRole(),
+        assessmentService.getUserAssessmentSummaries(),
         assessmentService.getAssessmentCycles(),
         userService.getAllUsers(),
         teamService.getAllTeams(),
@@ -96,6 +101,7 @@ const HRAssessmentManagement: React.FC = () => {
       ]);
 
       if (assessmentsRes?.success !== false) setAssessments(Array.isArray(assessmentsRes) ? assessmentsRes : assessmentsRes?.data || []);
+      if (userSummariesRes?.success !== false) setUserSummaries(Array.isArray(userSummariesRes) ? userSummariesRes : userSummariesRes?.data || []);
       if (cyclesRes?.success !== false) setCycles(Array.isArray(cyclesRes) ? cyclesRes : cyclesRes?.data || []);
       if (usersRes?.success !== false) {
         // Filter out HR users
@@ -250,6 +256,28 @@ const HRAssessmentManagement: React.FC = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleShowUserHistory = async (userId: string, userName: string) => {
+    try {
+      setSelectedUserName(userName);
+      setIsLoading(true);
+      const response = await assessmentService.getUserAssessmentHistory(userId);
+      if (response?.success !== false) {
+        const historyData = Array.isArray(response) ? response : response?.data || [];
+        setSelectedUserHistory(historyData);
+        setShowHistoryModal(true);
+      }
+    } catch (error) {
+      console.error("Error loading user history:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load user assessment history",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -425,13 +453,14 @@ const HRAssessmentManagement: React.FC = () => {
           
           {selectedTab === "assessments" && (
             <AssessmentsTab
-              assessments={filteredAssessments}
+              userSummaries={userSummaries}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
               getStatusColor={getStatusColor}
               formatDate={formatDate}
+              onShowHistory={handleShowUserHistory}
             />
           )}
 
@@ -506,6 +535,21 @@ const HRAssessmentManagement: React.FC = () => {
           onClose={() => setShowReviewModal(false)}
         />
       )}
+
+      {showHistoryModal && (
+        <UserHistoryModal
+          userName={selectedUserName}
+          assessmentHistory={selectedUserHistory}
+          isOpen={showHistoryModal}
+          onClose={() => {
+            setShowHistoryModal(false);
+            setSelectedUserHistory([]);
+            setSelectedUserName("");
+          }}
+          getStatusColor={getStatusColor}
+          formatDate={formatDate}
+        />
+      )}
     </div>
   );
 };
@@ -560,14 +604,22 @@ const OverviewTab: React.FC<{
 };
 
 const AssessmentsTab: React.FC<{
-  assessments: AssessmentWithHistory[];
+  userSummaries: any[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   statusFilter: string;
   setStatusFilter: (status: string) => void;
   getStatusColor: (status: AssessmentStatus) => string;
   formatDate: (date: string | Date) => string;
-}> = ({ assessments, searchTerm, setSearchTerm, statusFilter, setStatusFilter, getStatusColor, formatDate }) => {
+  onShowHistory: (userId: string, userName: string) => void;
+}> = ({ userSummaries, searchTerm, setSearchTerm, statusFilter, setStatusFilter, getStatusColor, formatDate, onShowHistory }) => {
+  // Filter user summaries based on search and status
+  const filteredSummaries = userSummaries.filter(summary => {
+    const matchesSearch = summary.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const matchesStatus = statusFilter === "all" || summary.latestAssessment?.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -597,45 +649,68 @@ const AssessmentsTab: React.FC<{
         </select>
       </div>
 
-      {/* Assessments List */}
+      {/* User Summaries List - One row per user with latest assessment */}
       <div className="space-y-4">
-        {assessments.map((assessment) => (
-          <div key={assessment.id} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="h-5 w-5 text-blue-600" />
+        {filteredSummaries.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-lg text-gray-600">No assessments found</p>
+            <p className="text-sm text-gray-500">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          filteredSummaries.map((summary) => (
+            <div key={summary.user.id} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Users className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{summary.user?.name}</h4>
+                    <p className="text-sm text-gray-500">
+                      {summary.user?.role?.name} • {summary.user?.team?.name || 'No Team'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(summary.latestAssessment?.status)}`}>
+                    {summary.latestAssessment?.status.replace('_', ' ')}
+                  </span>
+                  <button
+                    onClick={() => onShowHistory(summary.user.id, summary.user.name)}
+                    className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center gap-1"
+                  >
+                    <Clock className="h-4 w-4" />
+                    History
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Latest Assessment:</span>
+                  <span className="ml-2">{formatDate(summary.latestAssessment?.requestedAt)}</span>
                 </div>
                 <div>
-                  <h4 className="font-medium">{assessment.user?.name}</h4>
-                  <p className="text-sm text-gray-500">Assessment #{assessment.id}</p>
+                  <span className="text-gray-500">Current Cycle:</span>
+                  <span className="ml-2">{summary.latestAssessment?.currentCycle}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Skills Assessed:</span>
+                  <span className="ml-2">{summary.latestAssessment?.detailedScores?.length || 0}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Total Assessments:</span>
+                  <span className="ml-2 font-medium">{summary.totalAssessments}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Total Cycles:</span>
+                  <span className="ml-2">{summary.totalCycles}</span>
                 </div>
               </div>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assessment.status)}`}>
-                {assessment.status.replace('_', ' ')}
-              </span>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-gray-500">Created:</span>
-                <span className="ml-2">{formatDate(assessment.requestedAt)}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Cycle:</span>
-                <span className="ml-2">{assessment.currentCycle}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Skills:</span>
-                <span className="ml-2">{assessment.detailedScores?.length || 0}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Progress:</span>
-                <span className="ml-2">{Math.round((assessment.currentCycle / 5) * 100)}%</span>
-              </div>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
@@ -1193,6 +1268,132 @@ const HRReviewModal: React.FC<{
             )}
             <CheckCircle className="h-4 w-4" />
             Approve & Complete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const UserHistoryModal: React.FC<{
+  userName: string;
+  assessmentHistory: AssessmentWithHistory[];
+  isOpen: boolean;
+  onClose: () => void;
+  getStatusColor: (status: AssessmentStatus) => string;
+  formatDate: (date: string | Date) => string;
+}> = ({ userName, assessmentHistory, isOpen, onClose, getStatusColor, formatDate }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Assessment History - {userName}</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <XCircle className="h-6 w-6" />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Total assessments: {assessmentHistory.length}
+          </p>
+        </div>
+
+        <div className="p-6">
+          {assessmentHistory.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-lg text-gray-600">No assessment history found</p>
+              <p className="text-sm text-gray-500">This user has no assessment records</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {assessmentHistory.map((assessment, index) => (
+                <div key={assessment.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-blue-600">#{index + 1}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Assessment #{assessment.id}</h4>
+                        <p className="text-sm text-gray-500">
+                          Created: {formatDate(assessment.requestedAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assessment.status)}`}>
+                      {assessment.status.replace('_', ' ')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Status:</span>
+                      <span className="ml-2">{assessment.status.replace('_', ' ')}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Cycle:</span>
+                      <span className="ml-2">{assessment.currentCycle}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Skills:</span>
+                      <span className="ml-2">{assessment.detailedScores?.length || 0}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Completed:</span>
+                      <span className="ml-2">{assessment.completedAt ? formatDate(assessment.completedAt) : 'Not completed'}</span>
+                    </div>
+                  </div>
+
+                  {/* Show skills and scores if available */}
+                  {assessment.detailedScores && assessment.detailedScores.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <h5 className="text-sm font-medium text-gray-700 mb-2">Skills Assessment:</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {assessment.detailedScores.map((score: DetailedScore) => (
+                          <div key={score.skillId} className="flex items-center justify-between text-sm bg-gray-50 rounded p-2">
+                            <span className="text-gray-700">{score.Skill?.name}</span>
+                            {score.leadScore !== null ? (
+                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                                {score.leadScore}/4
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">Not scored</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show assessment history/audit trail */}
+                  {assessment.history && assessment.history.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <h5 className="text-sm font-medium text-gray-700 mb-2">Assessment Timeline:</h5>
+                      <div className="space-y-1">
+                        {assessment.history.map((audit, auditIndex) => (
+                          <div key={auditIndex} className="flex items-center justify-between text-xs text-gray-600">
+                            <span>{audit.auditType?.replace('_', ' ')}</span>
+                            <span>{formatDate(audit.auditedAt)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-gray-200 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+          >
+            Close
           </button>
         </div>
       </div>

@@ -500,6 +500,30 @@ const assessmentRoutes = {
       },
 
       // ===== END NEW TEAM-BASED BULK ASSESSMENT ROUTES =====
+
+      // Get user assessment summaries (HR only)
+      {
+        method: "GET",
+        path: "/user-summaries",
+        handler: AssessmentController.getUserAssessmentSummaries,
+        options: {
+          auth: 'jwt',
+          description: 'Get user assessment summaries (latest assessment per user)',
+          tags: ['api', 'assessment', 'hr'],
+        }
+      },
+      
+      // Get user assessment history
+      {
+        method: "GET",
+        path: "/user-history/{userId}",
+        handler: AssessmentController.getUserAssessmentHistory,
+        options: {
+          auth: 'jwt',
+          description: 'Get full assessment history for a specific user',
+          tags: ['api', 'assessment', 'hr'],
+        }
+      },
     ]);
   },
 };
