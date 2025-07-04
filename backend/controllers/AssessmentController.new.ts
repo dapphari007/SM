@@ -1261,6 +1261,40 @@ const AssessmentController: Controller = {
     }
   },
 
+  // Get assessment score change history
+  getAssessmentScoreHistory: async (req: AuthRequest, h: ResponseToolkit) => {
+    try {
+      const { assessmentId } = req.params as { assessmentId: string };
+      
+      if (!assessmentId) {
+        return h
+          .response({
+            success: false,
+            error: "Assessment ID is required",
+          })
+          .code(400);
+      }
+
+      const scoreHistory = await AssessmentService.getAssessmentScoreHistory(parseInt(assessmentId));
+
+      return h
+        .response({
+          success: true,
+          data: scoreHistory,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting assessment score history:", error);
+      
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(500);
+    }
+  },
+
   // ===== END NEW TEAM-BASED BULK ASSESSMENT METHODS =====
 };
 

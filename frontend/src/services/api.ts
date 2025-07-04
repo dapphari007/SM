@@ -260,6 +260,10 @@ export const assessmentService = {
   // Get user assessment history (HR only)  
   getUserAssessmentHistory: (userId: string) =>
     apiRequest(`/assess/user-history/${userId}`),
+
+  // Get assessment score change history
+  getAssessmentScoreHistory: (assessmentId: number) =>
+    apiRequest(`/assess/score-history/${assessmentId}`),
 };
 
 // Skill Upgrade Guide Services

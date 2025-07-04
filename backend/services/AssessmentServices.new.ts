@@ -168,21 +168,50 @@ const AssessmentService = {
         throw new Error("Assessment is not in a writable state");
       }
 
+      // Track score changes for audit trail
+      const scoreChanges = [];
+
       // Update lead scores
       for (const skillScore of skillScores) {
         const score = await scoreRepo.findOne({
           where: {
             assessmentId: assessmentId,
             skillId: skillScore.skillId
-          }
+          },
+          relations: ["Skill"]
         });
 
         if (score) {
           if (skillScore.leadScore < 1 || skillScore.leadScore > 4) {
             throw new Error(`Invalid lead score for skill ${skillScore.skillId}. Must be between 1 and 4`);
           }
-          score.leadScore = skillScore.leadScore;
+
+          // Track the change
+          const previousScore = score.leadScore;
+          const newScore = skillScore.leadScore;
+          
+          score.leadScore = newScore;
           await scoreRepo.save(score);
+
+          // Record score change for audit
+          scoreChanges.push({
+            skillId: skillScore.skillId,
+            skillName: score.Skill?.name || `Skill ${skillScore.skillId}`,
+            previousScore: previousScore,
+            newScore: newScore,
+            changed: previousScore !== newScore
+          });
+
+          // Create detailed audit entry for each score change
+          if (previousScore !== newScore) {
+            await AuditRepo.save({
+              assessmentId: assessmentId,
+              auditType: "SCORE_UPDATED",
+              editorId: parseInt(leadId),
+              comments: `Score changed for skill "${score.Skill?.name}": ${previousScore || 'null'} → ${newScore}`,
+              cycleNumber: assessment.currentCycle
+            });
+          }
         }
       }
 
@@ -191,12 +220,17 @@ const AssessmentService = {
       assessment.nextApprover = parseInt(assessment.userId);
       await assessmentRequestRepo.save(assessment);
 
-      // Create audit log
+      // Create general audit log with score summary
+      const changedScores = scoreChanges.filter(sc => sc.changed);
+      const scoresSummary = changedScores.length > 0 
+        ? `Updated scores: ${changedScores.map(sc => `${sc.skillName} (${sc.previousScore || 'null'} → ${sc.newScore})`).join(', ')}`
+        : 'No score changes made';
+
       await AuditRepo.save({
         assessmentId: assessmentId,
         auditType: "LEAD_ASSESSMENT_WRITTEN",
         editorId: parseInt(leadId),
-        comments: comments,
+        comments: `${comments || 'Lead assessment completed'}. ${scoresSummary}`,
         cycleNumber: assessment.currentCycle
       });
 
@@ -232,27 +266,44 @@ const AssessmentService = {
         throw new Error("Assessment is not in a reviewable state");
       }
 
+      // Get current scores for audit trail
+      const currentScores = await scoreRepo.find({
+        where: { assessmentId: assessmentId },
+        relations: ["Skill"]
+      });
+
+      const scoresSnapshot = currentScores.map(score => 
+        `${score.Skill?.name}: ${score.leadScore}/4`
+      ).join(', ');
+
       // Update assessment status based on employee decision
       if (approved) {
         assessment.status = AssessmentStatus.EMPLOYEE_APPROVED;
         assessment.nextApprover = parseInt(assessment.initiatedBy); // HR
+
+        await AuditRepo.save({
+          assessmentId: assessmentId,
+          auditType: "EMPLOYEE_APPROVED",
+          editorId: parseInt(employeeId),
+          comments: `${comments || 'Employee approved the assessment'}. Scores reviewed: ${scoresSnapshot}`,
+          cycleNumber: assessment.currentCycle
+        });
       } else {
         // Employee rejected - send back to Team Lead for revision
         assessment.status = AssessmentStatus.LEAD_WRITING;
         assessment.nextApprover = assessment.user?.leadId ? parseInt(assessment.user.leadId) : null;
         assessment.currentCycle += 1; // Increment cycle for rejection
+
+        await AuditRepo.save({
+          assessmentId: assessmentId,
+          auditType: "EMPLOYEE_REJECTED",
+          editorId: parseInt(employeeId),
+          comments: `${comments || 'Employee rejected the assessment - requesting revision'}. Disputed scores: ${scoresSnapshot}`,
+          cycleNumber: assessment.currentCycle
+        });
       }
 
       await assessmentRequestRepo.save(assessment);
-
-      // Create audit log
-      await AuditRepo.save({
-        assessmentId: assessmentId,
-        auditType: approved ? "EMPLOYEE_APPROVED" : "EMPLOYEE_REJECTED",
-        editorId: parseInt(employeeId),
-        comments: comments,
-        cycleNumber: assessment.currentCycle
-      });
 
       return await AssessmentService.getAssessmentWithHistory(assessmentId);
     } catch (error: any) {
@@ -289,6 +340,16 @@ const AssessmentService = {
         throw new Error("Assessment is not ready for HR final review");
       }
 
+      // Get current scores for audit trail
+      const currentScores = await scoreRepo.find({
+        where: { assessmentId: assessmentId },
+        relations: ["Skill"]
+      });
+
+      const scoresSnapshot = currentScores.map(score => 
+        `${score.Skill?.name}: ${score.leadScore}/4`
+      ).join(', ');
+
       if (approved) {
         // Assessment completed
         assessment.status = AssessmentStatus.COMPLETED;
@@ -299,23 +360,31 @@ const AssessmentService = {
         if (assessment.nextScheduledDate) {
           await AssessmentService.scheduleNextAssessment(assessment);
         }
+
+        // Create audit log with final scores
+        await AuditRepo.save({
+          assessmentId: assessmentId,
+          auditType: "HR_APPROVED",
+          editorId: parseInt(hrId),
+          comments: `${comments || 'Assessment approved by HR'}. Final scores: ${scoresSnapshot}`,
+          cycleNumber: assessment.currentCycle
+        });
       } else {
         // HR rejected - back to lead for revision
         assessment.status = AssessmentStatus.LEAD_WRITING;
         assessment.nextApprover = assessment.user?.leadId ? parseInt(assessment.user.leadId) : null;
         assessment.currentCycle += 1;
+
+        await AuditRepo.save({
+          assessmentId: assessmentId,
+          auditType: "HR_REJECTED",
+          editorId: parseInt(hrId),
+          comments: `${comments || 'Assessment rejected by HR - sent back for revision'}. Current scores: ${scoresSnapshot}`,
+          cycleNumber: assessment.currentCycle
+        });
       }
 
       await assessmentRequestRepo.save(assessment);
-
-      // Create audit log
-      await AuditRepo.save({
-        assessmentId: assessmentId,
-        auditType: approved ? "HR_APPROVED" : "HR_REJECTED",
-        editorId: parseInt(hrId),
-        comments: comments,
-        cycleNumber: assessment.currentCycle
-      });
 
       return await AssessmentService.getAssessmentWithHistory(assessmentId);
     } catch (error: any) {
@@ -346,11 +415,23 @@ const AssessmentService = {
         console.log(`DEBUG: Score ${score.id} - Skill ${score.skillId} (${score.Skill?.name}) - Lead Score: ${score.leadScore}`);
       });
 
-      // Get audit history
+      // Get audit history with enhanced score change tracking
       const history = await AuditRepo.find({
         where: { assessmentId: assessmentId },
+        relations: ["User"],
         order: { auditedAt: "ASC" }
       });
+
+      // Enhance history entries to include editor names and categorize score changes
+      const enhancedHistory = history.map(audit => ({
+        ...audit,
+        editorName: audit.User?.name || 'System',
+        isScoreChange: audit.auditType === 'SCORE_UPDATED',
+        category: audit.auditType?.includes('SCORE') ? 'score' : 
+                 audit.auditType?.includes('APPROVED') ? 'approval' :
+                 audit.auditType?.includes('REJECTED') ? 'rejection' :
+                 audit.auditType?.includes('INITIATED') ? 'initiation' : 'general'
+      }));
 
       // Check if assessment is accessible based on schedule
       const isAccessible = await AssessmentService.isAssessmentAccessible(assessmentId);
@@ -358,7 +439,7 @@ const AssessmentService = {
       return {
         ...assessment,
         detailedScores: scores,
-        history: history,
+        history: enhancedHistory,
         currentCycle: assessment.currentCycle || 1,
         isAccessible: isAccessible
       };
@@ -1316,6 +1397,42 @@ const AssessmentService = {
       return detailedAssessments;
     } catch (error: any) {
       throw new Error(`Failed to get user assessment history: ${error.message}`);
+    }
+  },
+
+  // Get detailed score change history for an assessment
+  getAssessmentScoreHistory: async (assessmentId: number): Promise<any[]> => {
+    try {
+      // Get all score-related audit entries
+      const scoreAudits = await AuditRepo.find({
+        where: { 
+          assessmentId: assessmentId,
+          auditType: 'SCORE_UPDATED'
+        },
+        relations: ["User"],
+        order: { auditedAt: "ASC" }
+      });
+
+      // Parse the score changes from audit comments
+      const scoreChanges = scoreAudits.map(audit => {
+        const comment = audit.comments || '';
+        const match = comment.match(/Score changed for skill "([^"]+)": (.+?) → (.+)/);
+        
+        return {
+          id: audit.id,
+          skillName: match ? match[1] : 'Unknown Skill',
+          previousScore: match ? (match[2] === 'null' ? null : parseInt(match[2])) : null,
+          newScore: match ? parseInt(match[3]) : null,
+          changedBy: audit.User?.name || 'Unknown',
+          changedAt: audit.auditedAt,
+          cycleNumber: audit.cycleNumber,
+          fullComment: comment
+        };
+      });
+
+      return scoreChanges;
+    } catch (error: any) {
+      throw new Error(`Failed to get score change history: ${error.message}`);
     }
   },
 };

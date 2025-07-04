@@ -11,7 +11,12 @@
     "start": "node dist/index.js",
     "start:ts": "node scripts/start-ts.js",
     "reset": "ts-node resetDB.ts",
-    "seed": "ts-node seeder.ts"
+    "seed": "ts-node seeder.ts",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d config/dataSource.ts",
+    "migration:create": "typeorm-ts-node-commonjs migration:create",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d config/dataSource.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d config/dataSource.ts",
+    "migration:show": "typeorm-ts-node-commonjs migration:show -d config/dataSource.ts"
   },
   "keywords": [],
   "author": "",

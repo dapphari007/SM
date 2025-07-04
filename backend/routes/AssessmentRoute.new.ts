@@ -524,6 +524,18 @@ const assessmentRoutes = {
           tags: ['api', 'assessment', 'hr'],
         }
       },
+      
+      // Get assessment score change history
+      {
+        method: "GET",
+        path: "/score-history/{assessmentId}",
+        handler: AssessmentController.getAssessmentScoreHistory,
+        options: {
+          auth: 'jwt',
+          description: 'Get detailed score change history for an assessment',
+          tags: ['api', 'assessment'],
+        }
+      },
     ]);
   },
 };

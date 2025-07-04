@@ -38,6 +38,9 @@ export const AppDataSource = new DataSource({
     Audit,
     Auth
   ],
+  migrations: ["src/migrations/*.ts"],
+  migrationsTableName: "migrations",
+  migrationsRun: true
 });
 
 

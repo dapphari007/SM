@@ -27,6 +27,11 @@ export const Audit = new EntitySchema<AuditType>({
     comments: {
       type: "text",
       nullable: true,
+    },
+    cycleNumber: {
+      type: "int",
+      nullable: true,
+      name: "cycle_number",
     }
   },
   relations: {
