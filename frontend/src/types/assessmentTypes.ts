@@ -86,4 +86,117 @@ export interface SkillCategory {
   skills: string[];
 }
 
+// New Assessment Workflow Types
+export interface AssessmentWithHistory {
+  id: number;
+  userId: string;
+  status: AssessmentStatus;
+  requestedAt: string;
+  scheduledDate?: string;
+  completedAt?: string;
+  currentCycle: number;
+  nextApprover: number | null;
+  initiatedBy: string;
+  nextScheduledDate?: string;
+  user?: UserInfo;
+  detailedScores: DetailedScore[];
+  history: AuditEntry[];
+  isAccessible: boolean;
+}
+
+export interface DetailedScore {
+  id: number;
+  assessmentId: number;
+  skillId: number;
+  leadScore: number | null;
+  updatedAt: string;
+  Skill: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface AuditEntry {
+  id: number;
+  assessmentId: number;
+  auditType: string;
+  editorId: number;
+  comments?: string;
+  cycleNumber: number;
+  auditedAt: string;
+  createdAt: string;
+}
+
+export enum AssessmentStatus {
+  INITIATED = "INITIATED",
+  LEAD_WRITING = "LEAD_WRITING",
+  EMPLOYEE_REVIEW = "EMPLOYEE_REVIEW",
+  EMPLOYEE_APPROVED = "EMPLOYEE_APPROVED",
+  EMPLOYEE_REJECTED = "EMPLOYEE_REJECTED",
+  HR_FINAL_REVIEW = "HR_FINAL_REVIEW",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "Cancelled"
+}
+
+export interface TeamMemberAssessment {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: {
+    id: number;
+    name: string;
+  };
+  position: {
+    id: number;
+    name: string;
+  };
+  team: {
+    id: number;
+    name: string;
+  };
+  leadId?: string;
+  activeAssessments: AssessmentWithHistory[];
+  latestCompletedAssessment?: AssessmentWithHistory;
+}
+
+export interface LeadSkillAssessment {
+  skillId: number;
+  leadScore: number;
+}
+
+export interface TeamStatistics {
+  totalTeamMembers: number;
+  assessments: {
+    total: number;
+    byStatus: {
+      initiated: number;
+      leadWriting: number;
+      employeeReview: number;
+      completed: number;
+    };
+  };
+  pendingActions: number;
+  recentAssessments: number;
+}
+
+export interface AssessmentCycle {
+  id: number;
+  title: string;
+  createdBy: string;
+  scheduledDate: string;
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+  comments?: string;
+  targetTeams: string[];
+  excludedUsers: string[];
+  totalAssessments: number;
+  completedAssessments: number;
+  createdAt: string;
+  updatedAt: string;
+  skills?: Array<{
+    id: number;
+    name: string;
+  }>;
+}
+
 

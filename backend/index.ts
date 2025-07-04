@@ -9,6 +9,7 @@ import Jwt from "@hapi/jwt";
 import authRoutes from "./routes/AuthRoute";
 // import { seedInitialData } from "./seeder";
 import assessmentRoutes from "./routes/AssessmentRoute.new";
+import AssessmentService from "./services/AssessmentServices.new";
 
 dotenv.config();
 
@@ -16,6 +17,10 @@ const init = async () => {
   // Initialize database connection first
   await AppDataSource.initialize();
   console.log("Database connected");
+  
+  // Initialize assessment cron jobs for automatic scheduling
+  // AssessmentService.initializeCronJobs();
+  // console.log("Assessment cron jobs initialized");
   
   // Then seed initial data
   // await seedInitialData();

@@ -165,28 +165,93 @@ export const teamService = {
 
 // Assessment Services
 export const assessmentService = {
-  createAssessment: (data) =>
-    apiRequest("/assess/create", { method: "POST", body: data }),
+  initiateAssessment: (data: {
+    targetUserId: string;
+    skillIds: number[];
+    scheduledDate?: string;
+    comments?: string;
+  }) => apiRequest("/assess/initiate", { method: "POST", body: data }),
+
+  writeLeadAssessment: (assessmentId: number, skillScores: Array<{ skillId: number; leadScore: number }>, comments?: string) => 
+    apiRequest(`/assess/lead-assessment/${assessmentId}`, { 
+      method: "POST", 
+      body: { skillScores, comments } 
+    }),
+
+  employeeReviewAssessment: (assessmentId: number, data: {
+    approved: boolean;
+    comments?: string;
+  }) => apiRequest(`/assess/employee-review/${assessmentId}`, { method: "POST", body: data }),
+
+  hrFinalReview: (assessmentId: number, data: {
+    approved: boolean;
+    comments?: string;
+  }) => apiRequest(`/assess/hr-final-review/${assessmentId}`, { method: "POST", body: data }),
+
+  getAssessmentWithHistory: (assessmentId: number) =>
+    apiRequest(`/assess/history/${assessmentId}`),
+
+  getAssessmentsForRole: () =>
+    apiRequest("/assess/role-assessments"),
+
+  getAssessmentsRequiringAction: () =>
+    apiRequest("/assess/pending-actions"),
+
+  // Team Lead specific methods
+  getTeamAssessments: () =>
+    apiRequest("/assess/team/assessments"),
+
+  getTeamMembers: () =>
+    apiRequest("/assess/team/members"),
+
+  getPendingTeamAssessments: () =>
+    apiRequest("/assess/team/pending"),
+
+  getTeamMemberAssessment: (userId: string) =>
+    apiRequest(`/assess/team/member/${userId}`),
+
+  getTeamAssessmentStatistics: () =>
+    apiRequest("/assess/team/statistics"),
+
+  // Bulk assessment for HR
+  initiateBulkAssessment: (data: {
+    skillIds: number[];
+    assessmentTitle: string;
+    includeTeams: string[];
+    scheduledDate?: string;
+    comments?: string;
+    excludeUsers?: string[];
+  }) => apiRequest("/assess/cycles/initiate", { method: "POST", body: data }),
+
+  getAssessmentCycles: () =>
+    apiRequest("/assess/cycles"),
+
+  getAssessmentCycleDetails: (cycleId: number) =>
+    apiRequest(`/assess/cycles/${cycleId}`),
+
+  cancelAssessmentCycle: (cycleId: number, comments?: string) =>
+    apiRequest(`/assess/cycles/${cycleId}/cancel`, { 
+      method: "POST", 
+      body: { comments } 
+    }),
+
+  // Legacy methods
+  getAllAssessments: () => apiRequest("/assess/all"),
 
   getAssessmentById: (id: string) => apiRequest(`/assess/${id}`),
 
-  getAllAssessments: () => apiRequest("/assess/all"),
+  reviewAssessment: (id: string, data: any) =>
+    apiRequest(`/assess/review/${id}`, { method: "POST", body: data }),
 
-  reviewAssessment: (assessmentId: string, data: any) =>
-    apiRequest(`/assess/review/${assessmentId}`, {
-      method: "POST",
-      body: data,
-    }),
-
-  getMyAssignedAssessments: () => apiRequest("/assess/pending"),
+  getMyAssignedAssessments: () => apiRequest("/assess/pending-actions"),
 
   cancelAssessment: (assessmentId: string) =>
     apiRequest(`/assess/cancel/${assessmentId}`, { method: "DELETE" }),
 
-  getUserLatestApprovedScores: () => apiRequest("/assess/score"),
+  getUserLatestApprovedScores: () => apiRequest("/assess/scores"),
 
   getUserLatestApprovedScoresByUserId: (userId: number) =>
-    apiRequest(`/assess/score/${userId}`),
+    apiRequest(`/assess/scores/${userId}`),
 };
 
 // Skill Upgrade Guide Services
@@ -195,7 +260,14 @@ export const skillUpgradeService = {
     skillId: string;
     currentLevel: number;
     targetLevel: number;
-  }) => apiRequest("/guides/get", { method: "POST", body: data }),
+  }) => apiRequest("/guides/get", { 
+    method: "POST", 
+    body: {
+      skillId: data.skillId,
+      fromLevel: data.currentLevel,
+      toLevel: data.targetLevel
+    }
+  }),
 
   getAllGuidesBySkillId: (skillId: string) =>
     apiRequest(`/guides/skill/${skillId}`),

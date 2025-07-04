@@ -632,7 +632,7 @@ const AssessmentService = {
           where: {
             role: { name: In([role.EMPLOYEE, role.LEAD]) }
           },
-          relations: ["role", "team"]
+          relations: ["role", "Team"]
         });
       } else {
         // Get users from specific teams
@@ -642,7 +642,7 @@ const AssessmentService = {
             teamId: In(teamIds),
             role: { name: In([role.EMPLOYEE, role.LEAD]) }
           },
-          relations: ["role", "team"]
+          relations: ["role", "Team"]
         });
       }
 
@@ -799,7 +799,7 @@ const AssessmentService = {
 
       const teamMembers = await userRepo.find({
         where: { leadId: leadId },
-        relations: ["role", "team", "position"],
+        relations: ["role", "Team", "position"],
         order: { name: "ASC" }
       });
 
@@ -1169,6 +1169,63 @@ const AssessmentService = {
       return summary;
     } catch (error: any) {
       throw new Error(`Failed to get team summary: ${error.message}`);
+    }
+  },
+
+  // Get user's latest approved scores (only lead scores, no self scores)
+  getUserLatestApprovedScores: async (userId: string): Promise<LatestScore[]> => {
+    try {
+      // Get all completed assessments for the user
+      const completedAssessments = await assessmentRequestRepo.find({
+        where: {
+          userId: userId,
+          status: AssessmentStatus.COMPLETED
+        },
+        order: { requestedAt: "DESC" }
+      });
+
+      if (completedAssessments.length === 0) {
+        return [];
+      }
+
+      // Get all scores from completed assessments
+      const assessmentIds = completedAssessments.map(a => a.id);
+      const allScores = await scoreRepo.find({
+        where: {
+          assessmentId: In(assessmentIds)
+        },
+        relations: ["Skill"]
+      });
+
+      // Filter scores to only include those with lead scores
+      const scoresWithLeadScore = allScores.filter(score => score.leadScore !== null);
+
+      // Group scores by skill and get the latest for each skill
+      const latestScoresBySkill = new Map<number, any>();
+      
+      for (const score of scoresWithLeadScore) {
+        const skillId = score.skillId;
+        const assessment = completedAssessments.find(a => a.id === score.assessmentId);
+        
+        if (assessment && score.Skill) {
+          if (!latestScoresBySkill.has(skillId) || 
+              assessment.requestedAt > latestScoresBySkill.get(skillId).requestedAt) {
+            latestScoresBySkill.set(skillId, {
+              id: score.id,
+              self_score: null, // No self scores in the workflow
+              lead_score: score.leadScore,
+              updated_at: score.updatedAt,
+              skill_name: score.Skill.name,
+              skill_id: skillId,
+              requestedAt: assessment.requestedAt
+            });
+          }
+        }
+      }
+
+      return Array.from(latestScoresBySkill.values());
+    } catch (error: any) {
+      throw new Error(`Failed to get user's latest approved scores: ${error.message}`);
     }
   }
 };

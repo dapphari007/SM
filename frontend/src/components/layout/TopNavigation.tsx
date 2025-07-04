@@ -50,28 +50,29 @@ const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
       { id: "skill-upgrade", label: "Upgrade Guide", icon: TrendingUp }
     ];
 
-    if (user?.role?.name === "hr" || user?.role?.name === "lead") {
+    if (user?.role?.name === "hr") {
       baseItems.splice(
         2,
         0,
         { id: "team-overview", label: "Team Overview", icon: Users },
         { id: "skill-matrix", label: "Skill Matrix", icon: Grid3X3 },
-        {id:"team-assessment", label:"Team Assessment",icon:Grid3X3},
-        //To display the Pending reviews
-        // {
-        //   id: "pending-assessments",
-        //   label: "Pending Reviews",
-        //   icon: ClipboardCheck,
-        // }
+        { id: "hr-assessment-management", label: "HR Assessment", icon: ClipboardCheck }
+      );
+    } else if (user?.role?.name === "lead") {
+      baseItems.splice(
+        2,
+        0,
+        { id: "team-overview", label: "Team Overview", icon: Users },
+        { id: "skill-matrix", label: "Skill Matrix", icon: Grid3X3 },
+        { id: "team-assessment", label: "Team Assessment", icon: ClipboardCheck }
+      );
+    } else if (user?.role?.name === "employee") {
+      baseItems.splice(
+        2,
+        0,
+        { id: "employee-assessment-review", label: "My Assessments", icon: ClipboardCheck }
       );
     }
-    //To display the Assessment 
-    // if(user?.role?.name==="lead"){
-    //   baseItems.splice(
-    //     2,0,
-    //     {id:"skill-assessment",label:"Assessment",icon:Grid3X3}
-    //   );
-    // }
 
     return baseItems;
   };

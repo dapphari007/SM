@@ -727,23 +727,57 @@ const AssessmentController: Controller = {
   },
 
   getUserLatestApprovedScores: async (req: AuthRequest, h: ResponseToolkit) => {
-    // Legacy method - basic implementation
-    return h
-      .response({
-        success: false,
-        error: "Legacy method not implemented in new workflow",
-      })
-      .code(400);
+    try {
+      const userId = req.auth.credentials.user.id;
+      const scores = await AssessmentService.getUserLatestApprovedScores(userId);
+      
+      return h
+        .response({
+          success: true,
+          data: scores,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting user's latest approved scores:", error);
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(404);
+    }
   },
 
   getUserLatestApprovedScoresByUserId: async (req: AuthRequest, h: ResponseToolkit) => {
-    // Legacy method - basic implementation
-    return h
-      .response({
-        success: false,
-        error: "Legacy method not implemented in new workflow",
-      })
-      .code(400);
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return h
+          .response({
+            success: false,
+            error: "User ID is required",
+          })
+          .code(400);
+      }
+      
+      const scores = await AssessmentService.getUserLatestApprovedScores(userId);
+      
+      return h
+        .response({
+          success: true,
+          data: scores,
+        })
+        .code(200);
+    } catch (error: any) {
+      console.error("Error getting user's latest approved scores by ID:", error);
+      return h
+        .response({
+          success: false,
+          error: error.message,
+        })
+        .code(404);
+    }
   },
 
   // ===== NEW TEAM-BASED BULK ASSESSMENT METHODS =====

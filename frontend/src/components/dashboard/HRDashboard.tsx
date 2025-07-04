@@ -25,7 +25,7 @@ const HRDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
     try {
       const matrix = await userService.getFullMatrix();
       const skillDetails = matrix.find((hr: any) => hr.userId === user.id)
-      const pendingRequests = await assessmentService.getMyAssignedAssessments();
+      const pendingRequests = await assessmentService.getAssessmentsRequiringAction();
       const teamsData = await teamService.getAllTeams();
       const criteria = await skillService.getAllSkills();
       
@@ -54,7 +54,8 @@ const HRDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
                   : 0;
 
       setStats(skillStats);
-      setPendingRequests(pendingRequests?.length || 0);
+      setPendingRequests(Array.isArray(pendingRequests) ? pendingRequests.length : 
+                       (pendingRequests?.data ? pendingRequests.data.length : 0));
       setOrganizationStats({
         totalEmployees: matrix?.length || 0,
         teams: teamsData?.length || 0,

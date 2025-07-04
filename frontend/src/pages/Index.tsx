@@ -16,6 +16,8 @@ import SkillUpgradePage from "../components/upgrade/SkillUpgradePage";
 import SkillAssessmentPage from "../components/assessment/SkillAssessmentPage";
 import PendingAssessmentsPage from "../components/assessment/PendingAssessmentsPage";
 import TeamAssessment from "@/components/assessment/TeamAssessment";
+import EmployeeAssessmentReview from "@/components/assessment/EmployeeAssessmentReview";
+import HRAssessmentManagement from "@/components/assessment/HRAssessmentManagement";
 
 
 const Index = () => {
@@ -44,6 +46,10 @@ const Index = () => {
       setActiveTab("pending-assessments");
     } else if(path.startsWith("/team-assessment")){
       setActiveTab("team-assessment");
+    } else if(path.startsWith("/employee-assessment-review")){
+      setActiveTab("employee-assessment-review");
+    } else if(path.startsWith("/hr-assessment-management")){
+      setActiveTab("hr-assessment-management");
     }
     else {
       setActiveTab("dashboard");
@@ -114,6 +120,12 @@ const Index = () => {
       case "team-assessment":
         navigate("/team-assessment");
         break;
+      case "employee-assessment-review":
+        navigate("/employee-assessment-review");
+        break;
+      case "hr-assessment-management":
+        navigate("/hr-assessment-management");
+        break;
       default:
         navigate("/");
     }
@@ -133,6 +145,8 @@ const Index = () => {
           <Route path="/skill-upgrade" element={<SkillUpgradePage />} />
           <Route path="/skill-assessment" element={<SkillAssessmentPage />} />
           <Route path="/team-assessment" element={<TeamAssessment/>}/>
+          <Route path="/employee-assessment-review" element={<EmployeeAssessmentReview/>}/>
+          <Route path="/hr-assessment-management" element={<HRAssessmentManagement/>}/>
           <Route
             path="/pending-assessments"
             element={<PendingAssessmentsPage />}

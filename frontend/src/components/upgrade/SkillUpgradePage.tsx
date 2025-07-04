@@ -73,7 +73,7 @@ const SkillUpgradePage = () => {
 
       // Get user profile to get current skill levels
       const profileData = await assessmentService.getUserLatestApprovedScores();
-      if(!profileData.data.length) {
+      if(!profileData.data?.length) {
         toast.warning("No skills found for the user. Please ensure you have completed an assessment.");
       }
       const userSkills = profileData.data || [];
