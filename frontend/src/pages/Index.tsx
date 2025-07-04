@@ -15,14 +15,14 @@ import SkillMatrixPage from "../components/matrix/SkillMatrixPage";
 import SkillUpgradePage from "../components/upgrade/SkillUpgradePage";
 import SkillAssessmentPage from "../components/assessment/SkillAssessmentPage";
 import PendingAssessmentsPage from "../components/assessment/PendingAssessmentsPage";
+import TeamAssessment from "@/components/assessment/TeamAssessment";
+
 
 const Index = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const location = useLocation();
   const navigate = useNavigate();
-
-
 
   useEffect(() => {
     const path = location.pathname;
@@ -42,7 +42,10 @@ const Index = () => {
       setActiveTab("skill-assessment");
     } else if (path.startsWith("/pending-assessments")) {
       setActiveTab("pending-assessments");
-    } else {
+    } else if(path.startsWith("/team-assessment")){
+      setActiveTab("team-assessment");
+    }
+    else {
       setActiveTab("dashboard");
     }
   }, [location.pathname]);
@@ -108,6 +111,9 @@ const Index = () => {
       case "pending-assessments":
         navigate("/pending-assessments");
         break;
+      case "team-assessment":
+        navigate("/team-assessment");
+        break;
       default:
         navigate("/");
     }
@@ -126,6 +132,7 @@ const Index = () => {
           <Route path="/skill-matrix" element={<SkillMatrixPage />} />
           <Route path="/skill-upgrade" element={<SkillUpgradePage />} />
           <Route path="/skill-assessment" element={<SkillAssessmentPage />} />
+          <Route path="/team-assessment" element={<TeamAssessment/>}/>
           <Route
             path="/pending-assessments"
             element={<PendingAssessmentsPage />}
