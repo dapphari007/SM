@@ -387,7 +387,7 @@ const AssessmentController: Controller = {
       
       const assessments = await AssessmentService.getAssessmentsForRole(
         userId,
-        userRole as role
+        userRole?.name as role
       );
 
       return h
@@ -499,7 +499,7 @@ const AssessmentController: Controller = {
       const pendingAssessments = await AssessmentService.getAssessmentsRequiringAction(userId);
       
       // Get role-specific assessments
-      const roleAssessments = await AssessmentService.getAssessmentsForRole(userId, userRole as role);
+      const roleAssessments = await AssessmentService.getAssessmentsForRole(userId, userRole?.name as role);
       
       // Filter for recent assessments (last 30 days)
       const thirtyDaysAgo = new Date();
@@ -538,7 +538,7 @@ const AssessmentController: Controller = {
       const userRole = req.auth.credentials.user.role;
       
       // Only HR can access statistics
-      if (userRole !== role.HR) {
+      if (userRole?.name !== role.HR) {
         return h
           .response({
             success: false,
@@ -548,7 +548,7 @@ const AssessmentController: Controller = {
       }
       
       const userId = req.auth.credentials.user.id;
-      const allAssessments = await AssessmentService.getAssessmentsForRole(userId, userRole as role);
+      const allAssessments = await AssessmentService.getAssessmentsForRole(userId, userRole?.name as role);
       
       // Calculate statistics
       const statistics = {
@@ -615,7 +615,7 @@ const AssessmentController: Controller = {
       }
       
       // Only HR can cancel assessments
-      if (userRole !== role.HR) {
+      if (userRole?.name !== role.HR) {
         return h
           .response({
             success: false,

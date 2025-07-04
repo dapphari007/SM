@@ -70,7 +70,7 @@ const SkillUpdateRequestController: Controller = {
     try {
       const userData = req.auth.credentials.user;
       const createdBy = userData.id;
-      const createrRole = userData.role;
+      const createrRole = userData.role?.name;
       const payload = req.payload as RequestPayload;
       const { userId, editedSkillScore, skillScore } = payload;
 

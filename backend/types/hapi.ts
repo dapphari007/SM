@@ -4,7 +4,10 @@ export interface AuthCredentials {
   user: {
     id: string;
     email: string;
-    role?: string;
+    role?: {
+      id: number;
+      name: string;
+    };
     [key: string]: any;
   };
   id?: string; // Added for backward compatibility

@@ -33,8 +33,8 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: { name: string };
-  team: { name: string };
+  role?: { name: string };
+  team?: { name: string };
 }
 
 interface Team {
@@ -100,6 +100,7 @@ const HRAssessmentManagement: React.FC = () => {
       if (usersRes?.success !== false) {
         // Filter out HR users
         const usersData = Array.isArray(usersRes) ? usersRes : usersRes?.data || [];
+        console.log("Users data:", usersData); // Debug log
         const nonHRUsers = usersData.filter((u: User) => u.role?.name !== "hr");
         setUsers(nonHRUsers);
       }
@@ -318,7 +319,17 @@ const HRAssessmentManagement: React.FC = () => {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => setShowInitiateModal(true)}
+            onClick={() => {
+              if (users.length === 0 || skills.length === 0) {
+                toast({
+                  title: "Error",
+                  description: "Please wait for data to load before initiating assessment",
+                  variant: "destructive",
+                });
+                return;
+              }
+              setShowInitiateModal(true);
+            }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
           >
             <UserPlus className="h-4 w-4" />
@@ -444,7 +455,7 @@ const HRAssessmentManagement: React.FC = () => {
       </div>
 
       {/* Modals */}
-      {showInitiateModal && (
+      {showInitiateModal && users.length > 0 && skills.length > 0 && (
         <InitiateAssessmentModal
           users={users}
           skills={skills}
@@ -789,9 +800,9 @@ const InitiateAssessmentModal: React.FC<{
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Choose a user...</option>
-              {users.map((user) => (
+              {users.filter(user => user.name && user.id).map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.name} - {user.role.name} ({user.team.name})
+                  {user.name} - {user.role?.name || 'Unknown Role'} ({user.team?.name || 'No Team'})
                 </option>
               ))}
             </select>
@@ -804,7 +815,7 @@ const InitiateAssessmentModal: React.FC<{
             </label>
             <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md p-3">
               <div className="space-y-2">
-                {skills.map((skill) => (
+                {skills.filter(skill => skill.name && skill.id).map((skill) => (
                   <label key={skill.id} className="flex items-center">
                     <input
                       type="checkbox"
