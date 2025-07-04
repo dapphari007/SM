@@ -174,11 +174,11 @@ const EmployeeDashboard = ({
               </div>
 
               <Button
-                onClick={() => onNavigate("skill-assessment")}
+                onClick={() => onNavigate("employee-assessment-review")}
                 className="w-full"
                 size="lg"
               >
-                Start Skill Assessment
+                View My Assessments
               </Button>
 
               <Button

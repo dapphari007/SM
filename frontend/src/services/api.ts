@@ -221,7 +221,7 @@ export const assessmentService = {
     scheduledDate?: string;
     comments?: string;
     excludeUsers?: string[];
-  }) => apiRequest("/assess/cycles/initiate", { method: "POST", body: data }),
+  }) => apiRequest("/assess/bulk-assessment", { method: "POST", body: data }),
 
   getAssessmentCycles: () =>
     apiRequest("/assess/cycles"),

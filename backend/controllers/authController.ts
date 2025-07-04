@@ -141,100 +141,100 @@ const AuthController: Controller = {
     }
   },
 
-  // login: async (req: Request, h: ResponseToolkit) => {
-  //   try {
-  //     const { email, password } = req.payload as LoginPayload;
-  //     // const auth = await authRepo
-  //     //   .createQueryBuilder("auth")
-  //     //   .addSelect("auth.passwordHash")
-  //     //   .where("auth.email = :email", { email: email })
-  //     //   .getOne();
+  // Legacy login method (simplified for development)
+  login: async (req: Request, h: ResponseToolkit) => {
+    try {
+      const { email, password } = req.payload as { email: string; password: string };
 
-  //     const user = await userRepo.findOne({
-  //       where: { email },
-  //       relations: ["role", "Team", "position"],
-  //     });
+      if (!email || !password) {
+        return h
+          .response({ error: "Email and password are required" })
+          .code(400);
+      }
 
-  //     // if (!user || !auth?.passwordHash) {
-  //     //   return h
-  //     //     .response({
-  //     //       error:
-  //     //         "Invalid username or password does not exist. Please sign up",
-  //     //     })
-  //     //     .code(401);
-  //     // }
+      const user = await userRepo.findOne({
+        where: { email },
+        relations: ["role", "Team", "position"],
+      });
 
-  //     // const isMatch = await bcrypt.compare(password, auth.passwordHash);
-  //     // if (!isMatch) {
-  //     //   return h.response({ error: "Invalid credentials" }).code(401);
-  //     // }
+      if (!user) {
+        return h
+          .response({
+            error: "User not found. Please contact admin or use Microsoft login",
+          })
+          .code(404);
+      }
 
-  //     const token = Jwt.token.generate(
-  //       {
-  //         id: user.id,
-  //         role: user.role,
-  //         name: user.name,
-  //         email: user.email,
-  //         hrId: user.hrId,
-  //         leadId: user.leadId,
-  //         position: user.position,
-  //         Team: user.Team,
-  //       },
-  //       { key: process.env.JWT_SECRET_KEY as string, algorithm: "HS256" }
-  //     );
-  //     return h.response({ token, user }).code(200);
-  //   } catch (error) {
-  //     console.log(error);
-  //     return h.response({ error: "Internal Server Error" }).code(500);
-  //   }
-  // },
+      // For development: accept any password (remove this in production!)
+      // In production, you'd want to verify the password against a hash
+      console.log(`Legacy login attempt for: ${email}`);
 
-  // signup: async (req: Request, h: ResponseToolkit) => {
-  //   try {
-  //     const { email, password } = req.payload as SignupPayload;
-
-  //     // validation
-  //     if (!email || !password) {
-  //       return h
-  //         .response({ error: "Email and Password are required fields" })
-  //         .code(400);
-  //     }
-
-  //     const existing = await userRepo.findOneBy({ email });
-  //     // const authDetails = await authRepo.findOne({
-  //     //   where: { email: email },
-  //     //   select: ["id", "email", "passwordHash"] as any,
-  //     // });
+      const token = Jwt.token.generate(
+        {
+          id: user.id,
+          role: user.role,
+          name: user.name,
+          email: user.email,
+          hrId: user.hrId,
+          leadId: user.leadId,
+          position: user.position,
+          Team: user.Team,
+        },
+        { key: process.env.JWT_SECRET_KEY as string, algorithm: "HS256" }
+      );
       
-  //     if (!existing) {
-  //       return h
-  //         .response({
-  //           error: "User not found for this email. Please Contact Admin",
-  //         })
-  //         .code(404);
-  //     }
+      return h.response({ 
+        success: true,
+        token, 
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          position: user.position,
+          Team: user.Team
+        }
+      }).code(200);
+    } catch (error) {
+      console.error("Legacy login error:", error);
+      return h.response({ error: "Internal Server Error" }).code(500);
+    }
+  },
 
-  //     // if (authDetails?.passwordHash) {
-  //     //   return h
-  //     //     .response({
-  //     //       error: "Password already set for this email address. Please Login",
-  //     //     })
-  //     //     .code(409);
-  //     // }
+  // Legacy signup method (simplified for development)
+  signup: async (req: Request, h: ResponseToolkit) => {
+    try {
+      const { email, password } = req.payload as { email: string; password: string };
 
-  //     // const passwordHash = await bcrypt.hash(password, 10);
+      // validation
+      if (!email || !password) {
+        return h
+          .response({ error: "Email and Password are required fields" })
+          .code(400);
+      }
 
-  //     // if (authDetails) {
-  //     //   authDetails.passwordHash = passwordHash;
-  //     //   await authRepo.save(authDetails);
-  //     // }
+      const existing = await userRepo.findOneBy({ email });
+      
+      if (!existing) {
+        return h
+          .response({
+            error: "User not found for this email. Please contact admin to create your account first",
+          })
+          .code(404);
+      }
 
-  //     return h.response({ message: "Password set successfully" }).code(201);
-  //   } catch (error) {
-  //     console.log(error);
-  //     return h.response({ error: "Internal Server Error" }).code(500);
-  //   }
-  // },
+      // For development: just return success (in production, you'd set up password hash)
+      console.log(`Legacy signup attempt for: ${email}`);
+      
+      return h.response({ 
+        success: true,
+        message: "Account setup completed. You can now login." 
+      }).code(201);
+    } catch (error) {
+      console.error("Legacy signup error:", error);
+      return h.response({ error: "Internal Server Error" }).code(500);
+    }
+  },
 };
 
 export default AuthController;

@@ -231,7 +231,10 @@ const AssessmentService = {
     comments: string = ""
   ): Promise<AssessmentWithHistory> => {
     try {
-      const assessment = await assessmentRequestRepo.findOneBy({ id: assessmentId });
+      const assessment = await assessmentRequestRepo.findOne({
+        where: { id: assessmentId },
+        relations: ["user"]
+      });
 
       if (!assessment) {
         throw new Error("Assessment not found");
@@ -251,8 +254,10 @@ const AssessmentService = {
         assessment.status = AssessmentStatus.EMPLOYEE_APPROVED;
         assessment.nextApprover = parseInt(assessment.initiatedBy); // HR
       } else {
-        assessment.status = AssessmentStatus.EMPLOYEE_REJECTED;
+        // Employee rejected - send back to Team Lead for revision
+        assessment.status = AssessmentStatus.LEAD_WRITING;
         assessment.nextApprover = assessment.user?.leadId ? parseInt(assessment.user.leadId) : null;
+        assessment.currentCycle += 1; // Increment cycle for rejection
       }
 
       await assessmentRequestRepo.save(assessment);
@@ -686,6 +691,25 @@ const AssessmentService = {
         const savedAssessment = await assessmentRequestRepo.save(assessment);
         assessments.push(savedAssessment);
 
+        // Create initial score entries for skills for this assessment
+        for (const skillId of skillIds) {
+          const skill = await skillRepo.findOneBy({ id: skillId });
+          if (skill) {
+            const score = scoreRepo.create({
+              assessmentId: savedAssessment.id,
+              skillId: skillId,
+              leadScore: null
+            });
+            await scoreRepo.save(score);
+          }
+        }
+
+        // Update status to LEAD_WRITING if user has a lead
+        if (user.leadId) {
+          savedAssessment.status = AssessmentStatus.LEAD_WRITING;
+          await assessmentRequestRepo.save(savedAssessment);
+        }
+
         // Create audit entry
         const auditEntry = AuditRepo.create({
           assessmentId: Array.isArray(savedAssessment) ? savedAssessment[0].id : savedAssessment.id,
@@ -732,6 +756,7 @@ const AssessmentService = {
         where: { id: leadId },
         relations: ["role"]
       });
+      
       if (!leadUser || leadUser.role?.name !== role.LEAD) {
         throw new Error("Only team leads can access team assessments");
       }
@@ -767,7 +792,7 @@ const AssessmentService = {
 
         const history = await AuditRepo.find({
           where: { assessmentId: assessment.id },
-          order: { createdAt: "ASC" }
+          order: { auditedAt: "ASC" }
         });
 
         assessmentsWithHistory.push({
@@ -931,6 +956,7 @@ const AssessmentService = {
         where: { id: leadId },
         relations: ["role"]
       });
+      
       if (!leadUser || leadUser.role?.name !== role.LEAD) {
         throw new Error("Only team leads can access pending team assessments");
       }
@@ -946,14 +972,13 @@ const AssessmentService = {
 
       const teamMemberIds = teamMembers.map(member => member.id);
 
-      // Get pending assessments for team
+      // Get pending assessments for team - only those requiring TL action
       const pendingAssessments = await assessmentRequestRepo.find({
         where: {
           userId: In(teamMemberIds),
           status: In([
             AssessmentStatus.INITIATED,
-            AssessmentStatus.LEAD_WRITING,
-            AssessmentStatus.EMPLOYEE_REVIEW
+            AssessmentStatus.LEAD_WRITING
           ])
         },
         relations: ["user", "user.role"],
@@ -970,7 +995,7 @@ const AssessmentService = {
 
         const history = await AuditRepo.find({
           where: { assessmentId: assessment.id },
-          order: { createdAt: "ASC" }
+          order: { auditedAt: "ASC" }
         });
 
         assessmentsWithHistory.push({
@@ -1027,7 +1052,7 @@ const AssessmentService = {
 
         const history = await AuditRepo.find({
           where: { assessmentId: assessment.id },
-          order: { createdAt: "ASC" }
+          order: { auditedAt: "ASC" }
         });
 
         assessmentsWithHistory.push({

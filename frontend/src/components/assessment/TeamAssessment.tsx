@@ -59,7 +59,7 @@ const TeamAssessment = () => {
     const [statistics, setStatistics] = useState<TeamStatistics | null>(null);
     const [skills, setSkills] = useState<Skill[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedTab, setSelectedTab] = useState("overview");
+    const [selectedTab, setSelectedTab] = useState("pending");
     
     const [openDropdowns, setOpenDropdowns] = useState<{
         [key: string]: boolean;
@@ -467,6 +467,8 @@ const TeamAssessment = () => {
                 />
             )}
 
+
+
             {/* Skill Scores Modal */}
             {showSkillModal && skillModalData && (
                 <SkillScoresModal 
@@ -575,17 +577,19 @@ const TeamOverviewTab: React.FC<{
                                             {member.mostRecentAssessmentScores?.length || 0}
                                         </span>
                                     </div>
-                                    <button
-                                        className={`px-3 py-1.5 text-sm border rounded-md transition-colors ${
-                                            member.hasRecentAssessment
-                                                ? "border-gray-300 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                : "border-gray-200 text-gray-400 cursor-not-allowed"
-                                        }`}
-                                        onClick={() => handleViewScores(member)}
-                                        disabled={!member.hasRecentAssessment}
-                                    >
-                                        View Scores
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className={`px-3 py-1.5 text-sm border rounded-md transition-colors ${
+                                                member.hasRecentAssessment
+                                                    ? "border-gray-300 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    : "border-gray-200 text-gray-400 cursor-not-allowed"
+                                            }`}
+                                            onClick={() => handleViewScores(member)}
+                                            disabled={!member.hasRecentAssessment}
+                                        >
+                                            View Scores
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {!member.hasRecentAssessment && (

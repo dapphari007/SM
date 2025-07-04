@@ -498,7 +498,7 @@ const assessmentRoutes = {
           tags: ['api', 'assessment', 'hr', 'team'],
         }
       },
-      
+
       // ===== END NEW TEAM-BASED BULK ASSESSMENT ROUTES =====
     ]);
   },
