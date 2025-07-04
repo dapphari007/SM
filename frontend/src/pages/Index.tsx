@@ -106,7 +106,7 @@ const Index = () => {
         navigate("/skill-upgrade");
         break;
       case "skill-assessment":
-        navigate("/skill-assessment");
+        navigate("/skill-assessment",{state:{user}});
         break;
       case "pending-assessments":
         navigate("/pending-assessments");
@@ -122,7 +122,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <TopNavigation activeTab={activeTab} onTabChange={handleNavigate} />
-
       <main className="p-8">
         <Routes>
           <Route path="/" element={renderDashboard()} />
@@ -132,11 +131,8 @@ const Index = () => {
           <Route path="/skill-matrix" element={<SkillMatrixPage />} />
           <Route path="/skill-upgrade" element={<SkillUpgradePage />} />
           <Route path="/skill-assessment" element={<SkillAssessmentPage />} />
-          <Route path="/team-assessment" element={<TeamAssessment/>}/>
-          <Route
-            path="/pending-assessments"
-            element={<PendingAssessmentsPage />}
-          />
+          <Route path="/team-assessment" element={<TeamAssessment onNavigate={(tab)=>{console.log(`Navigated to ${tab}`)}}/>}/>
+          <Route path="/pending-assessments" element={<PendingAssessmentsPage />}/>
           <Route path="/login" element={<OAuthLoginForm />} />
           <Route path="/legacy-login" element={<LoginForm />} />
           <Route path="/auth/callback" element={<OAuthCallback />} />
@@ -150,6 +146,7 @@ const Index = () => {
           />
         </Routes>
       </main>
+      
     </div>
   );
 };

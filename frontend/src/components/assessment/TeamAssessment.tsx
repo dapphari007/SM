@@ -32,7 +32,11 @@ import {
 import{TeamMember,SkillScore,SkillModalData} from "../../types/teamTypes";
 import { getAverageSkillLevel } from "@/utils/helper";
 import { subMilliseconds } from "date-fns";
-const TeamAssessment=()=>{
+import { SkillAssessment } from "@/types/assessmentTypes";
+import SkillAssessmentPage from "./SkillAssessmentPage";
+import { Button } from "../ui/button";
+
+const TeamAssessment=({onNavigate,}:{onNavigate:(tab:string,user:TeamMember)=>void;})=>{
     const {user}=useAuth();
     const [searchTerm,setSearchTerm]=useState("");
     const [teamMembers,setTeamMembers]=useState<TeamMember[]>([]);
@@ -133,6 +137,8 @@ const TeamAssessment=()=>{
             toast({title:"Filed to load skill scores",variant:"destructive"});
         }
     }
+
+
 
 
     return(
@@ -309,17 +315,15 @@ const TeamAssessment=()=>{
                                       {member.mostRecentAssessmentScores?.length || 0}
                                     </span>
                                   </div>
-                                  <button
-                                    className={`px-3 py-1.5 text-sm border rounded-md transition-colors ${
-                                      member.hasRecentAssessment
-                                        ? "border-gray-300 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        : "border-gray-200 text-gray-400 cursor-not-allowed"
-                                    }`}
-                                    onClick={() => handleViewScores(member)}
-                                    disabled={!member.hasRecentAssessment}
+                                  <div className="">
+                                  <Button
+                                    onClick={() => onNavigate("skill-assessment", member)}
+                                    className="w-full"
+                                    variant="outline"
                                   >
-                                    View Scores
-                                  </button>
+                                  Take Assessment
+                                  </Button>
+                                  </div>
                                 </div>
                 
                                 {!member.hasRecentAssessment && (
